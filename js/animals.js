@@ -352,7 +352,7 @@ async function buildForestAnimals(scene, rng, mixers, tickers, counts, markers, 
   for (const [key, label, len, x, z, ry] of spots) {
     const gltf = await loadSafe(AM[key], label, hooks);
     if (!gltf) continue;
-    const isPack = ['deer', 'boar', 'fox'].includes(key); // rabbit đã dùng model riêng, không xoay
+    const isPack = ['deer'].includes(key); // chỉ hươu còn dùng pack (nằm nghiêng); heo/cáo/thỏ đã dùng model riêng
     if (isPack) {
       // Model tách từ pack nằm nghiêng — xoay -90° quanh X cho đứng lên
       // TRƯỚC khi fitToSize chuẩn hoá bbox (đã kiểm bằng render).
