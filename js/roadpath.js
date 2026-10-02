@@ -42,9 +42,11 @@ const LOOP_XZ = [
   [-114, 2],    // vòng cung ôm cua tây-bắc (trải đều, không gấp)
   [-106, 8],
   [-96, 10],
-  [-76, 10],
-  [-65, 12],    // qua làng: đường thẳng mượt
-  [-45, 25],    // đông-nam
+  [-79, 16],    // vòng TRÁNH làng phía bắc (không đè nhà)
+  [-68, 20],
+  [-56, 23],
+  [-48, 28],    // ôm cua xuống phía nam (trải đều)
+  [-42, 42],
   [-40, 60],    // nam
   [-32, 82],    // vòng cung qua cụm dừa nam
   [-14, 94],

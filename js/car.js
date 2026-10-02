@@ -96,9 +96,40 @@ function buildWheelPivots(root, wheelNames, steerNames) {
   return out;
 }
 
+// Sơn lại Jeep theo ý Tony: thân xanh rêu, bánh xe đen.
+// Model gốc thân dùng nhầm texture xám của mâm → gỡ map, sơn màu solid.
+function repaintJeep(root) {
+  const MOSS_GREEN = 0x4a5d23; // xanh rêu
+  const BLACK = 0x1a1a1a;
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    for (const m of mats) {
+      if (!m) continue;
+      const nm = (m.name || '').toLowerCase();
+      if (nm.includes('carpaint') || nm.includes('rubiconnone1') || nm === 'material' || nm === 'material_9') {
+        // thân xe: xanh rêu solid
+        m.map = null;
+        m.color.setHex(MOSS_GREEN);
+        m.metalness = 0.3;
+        m.roughness = 0.6;
+        m.needsUpdate = true;
+      } else if (nm.includes('rim') || nm.includes('tire')) {
+        // bánh xe: đen
+        m.map = null;
+        m.color.setHex(BLACK);
+        m.metalness = 0.2;
+        m.roughness = 0.8;
+        m.needsUpdate = true;
+      }
+    }
+  });
+}
+
 async function buildOneCar(scene, cfg) {
   const gltf = await loadSafe(cfg.url);
   lightenMaterials(gltf.scene);
+  if (cfg.id === 'jeep') repaintJeep(gltf.scene); // sơn xanh rêu + bánh đen theo ý Tony
   const wheels = cfg.wheelNames ? buildWheelPivots(gltf.scene, cfg.wheelNames, cfg.steerNames || []) : [];
 
   // chuẩn hoá: dài = targetLen (trục z là hướng đầu xe), đáy y=0, tâm xz về 0
