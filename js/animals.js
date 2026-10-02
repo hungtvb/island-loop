@@ -353,7 +353,7 @@ async function buildForestAnimals(scene, rng, mixers, tickers, counts, markers, 
     ['fox', 'Cáo', 1.1, -39.2, 23.1, -1.8],
     ['rabbit', 'Thỏ', 0.65, -34.6, 50.9, 0.9],
     ['monkey', 'Khỉ', 1.0, -23.5, 78.0, 2.0],
-    ['elk', 'Nai sừng tấm', 2.5, 8, 72, 1.1],
+    ['elk', 'Nai sừng tấm', 2.5, 15, 60, 1.1],
   ];
   let n = 0;
   for (const [key, label, len, x, z, ry] of spots) {
