@@ -359,21 +359,19 @@ async function buildForestAnimals(scene, rng, mixers, tickers, counts, markers, 
   for (const [key, label, len, x, z, ry] of spots) {
     const gltf = await loadSafe(AM[key], label, hooks);
     if (!gltf) continue;
-    const isPack = ['deer'].includes(key); // chỉ hươu còn dùng pack (nằm nghiêng); heo/cáo/thỏ đã dùng model riêng
+    const isPack = ['deer'].includes(key); // chỉ hươu còn dùng pack (nằm nghiêng)
     if (isPack) {
       // Model tách từ pack nằm nghiêng — xoay -90° quanh X cho đứng lên
       // TRƯỚC khi fitToSize chuẩn hoá bbox (đã kiểm bằng render).
       gltf.scene.rotation.x = -Math.PI / 2;
       gltf.scene.updateMatrixWorld(true);
     }
-    // Heo và cáo file gốc bị dựng đứng (trục Y dài nhất) — xoay nằm xuống
-    if (key === 'boar' || key === 'fox') {
-      gltf.scene.rotation.x = -Math.PI / 2;
-      gltf.scene.updateMatrixWorld(true);
-    }
+    // Heo/cáo/thỏ model riêng đã đứng đúng hướng, không xoay
     const g = fitToSize(gltf.scene, len);
     const gy = meshHeight(x, z);
-    g.position.set(x, gy, z);
+    // Heo/cáo: bbox bind-pose sai (đáy không ở chân) → hạ thủ công cho chạm đất
+    const yFix = key === 'boar' ? -0.7 : key === 'fox' ? -0.48 : 0;
+    g.position.set(x, gy + yFix, z);
     g.rotation.y = ry;
     scene.add(g);
     markers.push({ label: key + n, obj: g });
@@ -396,12 +394,13 @@ async function buildForestAnimals(scene, rng, mixers, tickers, counts, markers, 
     if (!hasRealAnim) { // có animation thật thì không cần ticker giả
       tickers.push(() => {
         const t = (performance.now() - t0) / 1000;
+        const baseY = gy + yFix;
         if (isRabbit) {
           const hop = Math.max(0, Math.sin(t * 2.4));
-          g.position.y = gy + hop * hop * 0.06; // nhảy thấp hơn, đỡ lơ lửng
+          g.position.y = baseY + hop * hop * 0.06; // nhảy thấp hơn, đỡ lơ lửng
           g.rotation.x = -hop * 0.2;
         } else {
-          g.position.y = gy + 0.008 * Math.sin(t * 1.1 + n); // thở nhẹ, không lơ lửng
+          g.position.y = baseY + 0.008 * Math.sin(t * 1.1 + n); // thở nhẹ, không lơ lửng
           g.rotation.x = Math.pow(Math.max(0, Math.sin(t * 0.5 + n * 2)), 4) * 0.2;
         }
       });
