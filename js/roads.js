@@ -34,13 +34,16 @@ function makeRoadTexture() {
 export function buildRoad(scene) {
   const R = CONFIG.road;
   const pts = [];
-  for (let i = 0; i <= R.samples; i++) {
+  // Đường vòng KHÉP KÍN: bỏ điểm cuối trùng điểm đầu, curve closed=true để
+  // tiếp tuyến tại mối nối (chân đồi hải đăng, t=0/1) liền mạch — trước đây
+  // curve hở tạo "vết gãy" đúng chỗ này.
+  for (let i = 0; i < R.samples; i++) {
     const t = i / R.samples;
     const rp = roadPointAt(t);   // tim đường (đã gồm tâm lệch + wobble) — khớp ledge đã khắc
     // mặt đường = cao độ ledge đã khắc + lift — hai bên luôn khớp (xem roadpath.js)
     pts.push(new THREE.Vector3(rp.x, ledgeHeightAt(t) + R.lift, rp.z));
   }
-  const curve = new THREE.CatmullRomCurve3(pts);
+  const curve = new THREE.CatmullRomCurve3(pts, true, 'centripetal', 0.5);
   const segs = R.ribbonSegs;
   const hw = R.width / 2;
   const positions = new Float32Array((segs + 1) * 2 * 3);
@@ -180,14 +183,17 @@ export function buildTrail(scene) {
   trail.receiveShadow = true;
   scene.add(trail);
 
-  // vạt đất ở điểm đầu lối mòn — nối liền cuối đường nhựa, che mép nhựa cụt
+  // vạt đất ở điểm đầu lối mòn — đường vòng giờ KHÉP KÍN (không còn mép nhựa
+  // cụt) nên đĩa này đóng vai trò ngã ba đất nơi lối mòn rẽ lên đồi: đặt NGAY
+  // TRÊN mặt đường (+lift) thay vì theo terrainHeight — trước đây nó chìm 0.4m
+  // dưới mặt đường nên nhìn như chỗ vá lỗi.
   const start = trailPointAt(0);
   const disc = new THREE.Mesh(
     new THREE.CircleGeometry(3.4, 28),
     new THREE.MeshStandardMaterial({ map: makeDiscTexture(), transparent: true, depthWrite: false, roughness: 1, metalness: 0 })
   );
   disc.rotation.x = -Math.PI / 2;
-  disc.position.set(start.x, terrainHeight(start.x, start.z) + 0.10, start.z);
+  disc.position.set(start.x, ledgeHeightAt(0) + CONFIG.road.lift + 0.03, start.z);
   disc.renderOrder = 2;
   disc.receiveShadow = true;
   scene.add(disc);

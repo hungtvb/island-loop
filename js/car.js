@@ -6,6 +6,8 @@
 // Xe chạy dọc tim đường vòng khép kín, đúng hướng tiếp tuyến, tốc độ vừa phải.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { CONFIG } from './config.js';
+import { ledgeHeightAt } from './roadpath.js';
 
 const CARS = [
   {
@@ -154,7 +156,11 @@ export async function buildCar(scene, roadCurve, roadLength, onProgress) {
     st.u = (st.u + (st.speed * dt) / st.roadLength) % 1;
     roadCurve.getPointAt(st.u, pos);
     roadCurve.getTangentAt(st.u, tan);
-    car.group.position.set(pos.x, pos.y + 0.06, pos.z);
+    // Mặt đường visual = ledge + lift (xem roads.js) — xe phải đứng TRÊN mặt
+    // đường, không phải trên ledge. Trước đây thiếu +lift nên bánh chìm dưới
+    // đường và xe chui qua lòng đất.
+    const surfY = ledgeHeightAt(st.u) + CONFIG.road.lift;
+    car.group.position.set(pos.x, surfY + 0.06, pos.z);
     const yaw = Math.atan2(tan.x, tan.z);
     const pitch = -Math.asin(THREE.MathUtils.clamp(tan.y, -1, 1));
     car.group.rotation.order = 'YXZ';
