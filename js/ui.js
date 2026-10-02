@@ -8,10 +8,15 @@ export class UI {
     this.btnPause = document.getElementById('btn-pause');
     this.btnView = document.getElementById('btn-view');
     this.btnOrbit = document.getElementById('btn-orbit');
+    this.btnCam1 = document.getElementById('btn-cam1');
+    this.btnCam2 = document.getElementById('btn-cam2');
+    this.btnFree = document.getElementById('btn-free');
+    this.btnCar = document.getElementById('btn-car');
     this.metricsEl = document.getElementById('metrics');
     this.paused = false;
     this.orbitOn = true;
     this.viewMode = 'overview';
+    this.camMode = 'free';
   }
 
   progress(name, frac) {
@@ -83,6 +88,30 @@ export class UI {
       this.btnOrbit.innerHTML = this.orbitOn ? '🔁 Tự xoay: bật' : '🔁 Tự xoay: tắt';
       cb(this.orbitOn);
     });
+  }
+
+  // P6: camera follow xe — far (xa), chase (đuôi), free (orbit tự do)
+  onCamMode(cb) {
+    const pick = (m) => { this.camMode = m; this.setCamActive(m); cb(m); };
+    this.btnCam1.addEventListener('click', () => pick('far'));
+    this.btnCam2.addEventListener('click', () => pick('chase'));
+    this.btnFree.addEventListener('click', () => pick('free'));
+  }
+
+  setCamActive(m) {
+    const on = 'outline:2px solid #ffd54f;';
+    if (this.btnCam1) this.btnCam1.style.cssText = m === 'far' ? on : '';
+    if (this.btnCam2) this.btnCam2.style.cssText = m === 'chase' ? on : '';
+    if (this.btnFree) this.btnFree.style.cssText = m === 'free' ? on : '';
+  }
+
+  // P6: đổi xe trong game (không reload)
+  onCarSwitch(cb) {
+    this.btnCar.addEventListener('click', () => cb());
+  }
+
+  setCarLabel(label) {
+    if (this.btnCar) this.btnCar.innerHTML = '🔄 Xe: ' + label;
   }
 
   writeMetrics(m) {

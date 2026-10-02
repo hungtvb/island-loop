@@ -69,6 +69,7 @@ function scatter(rng, count, o, roadSamples) {
 
 // Dựng InstancedMesh cho một model với danh sách điểm đã rải.
 // Chuẩn hoá: chân model chạm đất, cao đúng targetH.
+// p.q (Quaternion, optional): hướng đầy đủ — dùng cho cây nghiêng tán vào đường.
 function makeInstanced(gltf, placements, targetH, castShadow) {
   const group = new THREE.Group();
   // QUAN TRỌNG: bake matrixWorld của node vào geometry. Nhiều GLB Sketchfab có node
@@ -90,7 +91,8 @@ function makeInstanced(gltf, placements, targetH, castShadow) {
     for (let i = 0; i < placements.length; i++) {
       const p = placements[i];
       dummy.position.set(p.x, p.y, p.z);
-      dummy.rotation.set(0, p.rot, 0);
+      if (p.q) dummy.quaternion.copy(p.q);
+      else dummy.rotation.set(0, p.rot, 0);
       const s = s0 * p.s;
       dummy.scale.set(s, s, s);
       dummy.updateMatrix();
@@ -155,8 +157,85 @@ export async function plantGrass(scene, roadSamples) {
   return pts.length;
 }
 
+// HÀNH LANG CÂY VEN ĐƯỜNG VÒNG — cây 2 bên đường, tán nghiêng giao nhau phía
+// trên tạo bóng mát khi xe chạy (yêu cầu của user). Dùng instancing có sẵn,
+// không trồng vào corridor đường (offset ≥6.5m), không khóa main thread.
+const GROVE_CENTERS = [[26, -98], [2, 106], [-118, -62]]; // cụm dừa P3 — giữ khoảng
+const _upV = new THREE.Vector3(0, 1, 0);
+const _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
+
+export async function plantRoadCorridor(scene, roadSamples) {
+  const rng = mulberry32(CONFIG.seed + 600);
+  const n = roadSamples.length;
+  // bước ~7m dọc đường
+  const stepLen = 7;
+  let acc = 0;
+  const byVariant = [[], [], [], []];
+  const palmPts = [];
+  const VG = CONFIG.village;
+  const fwd = new THREE.Vector3(), lat = new THREE.Vector3();
+  let station = 0;
+
+  for (let i = 0; i < n - 1; i++) { // bỏ điểm cuối trùng điểm đầu (vòng kín)
+    const p = roadSamples[i];
+    const q = roadSamples[(i + 1) % n];
+    acc += Math.hypot(q.x - p.x, q.z - p.z);
+    if (acc < stepLen && i > 0) continue;
+    acc = 0;
+    station++;
+
+    const pa = roadSamples[(i - 2 + n) % n], pb = roadSamples[(i + 2) % n];
+    fwd.set(pb.x - pa.x, 0, pb.z - pa.z);
+    if (fwd.lengthSq() < 1e-6) continue;
+    fwd.normalize();
+
+    for (const s of [1, -1]) {
+      // lateral: xoay fwd +90° (s=+1) / -90° (s=-1)
+      lat.set(-fwd.z * s, 0, fwd.x * s);
+      const off = 6.5 + rng() * 2.5;
+      const x = p.x + lat.x * off, z = p.z + lat.z * off;
+      const h = meshHeight(x, z);
+      if (h < 1.5 || h > 18) continue;
+      if (slopeAt(x, z) > 0.55) continue;
+      if (Math.hypot(x - VG.x, z - VG.z) < 30) continue;          // trong làng
+      if (Math.hypot(x - 74, z - 28) < 12) continue;              // ngã ba lối mòn
+      let inGrove = false;
+      for (const [gx, gz] of GROVE_CENTERS) {
+        if (Math.hypot(x - gx, z - gz) < 26) { inGrove = true; break; }
+      }
+      if (inGrove) continue;
+      if (distToRoadSq(x, z, roadSamples) < 5.5 * 5.5) continue;   // cua gấp cắt vào
+      if (Math.hypot(x - CONFIG.cliff.x, z - CONFIG.cliff.z) < 24) continue;
+
+      // nghiêng tán vào đường: quay quanh trục fwd một góc -s*lean
+      const lean = 0.10 + rng() * 0.07;
+      _q1.setFromAxisAngle(fwd, -s * lean);
+      _q2.setFromAxisAngle(_upV, rng() * Math.PI * 2);
+      const qq = _q1.clone().multiply(_q2);
+      const pt = { x, y: h - 0.15, z, rot: 0, s: 0.9 + rng() * 0.4, q: qq };
+      if (station % 6 === 0 && s === 1) palmPts.push(pt);
+      else byVariant[station % 4].push(pt);
+    }
+  }
+
+  let placed = 0;
+  for (let v = 0; v < 4; v++) {
+    if (!byVariant[v].length) continue;
+    const gltf = await loadGLB(CONFIG.models.jabami[v]);
+    const { group } = makeInstanced(gltf, byVariant[v], CONFIG.trees.jabamiHeights[v] + 1.5, true);
+    scene.add(group);
+    placed += byVariant[v].length;
+  }
+  if (palmPts.length) {
+    const gltf = await loadGLB(CONFIG.models.palm);
+    const { group } = makeInstanced(gltf, palmPts, CONFIG.trees.palmHeight + 1.0, true);
+    scene.add(group);
+    placed += palmPts.length;
+  }
+  return placed;
+}
 // RỪNG PHỦ SƯỜN VÁCH ĐÁ — như ảnh mẫu: cây xanh phủ kín sườn, đá xám sẫm chỉ lộ
-// từng mảng. Trừ hành lang đường (đường xoắn vẫn đọc rõ) + đĩa pad đỉnh.
+// từng mảng. Trừ hành lang đường (đường vòng vẫn đọc rõ) + đĩa pad đỉnh.
 // LƯU Ý: các vòng đường chỉ cách nhau ~8.7m nên roadClear tính từ TIM đường phải
 // nhỏ (6.5m ≈ 3.3m từ mép nhựa) — bản cũ 8.5m loại trừ cả sườn đồi nên không cây
 // nào mọc được. Cây trên sườn đá dốc: slope tới 2.0, lún chân theo dốc.

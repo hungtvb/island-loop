@@ -1,10 +1,13 @@
 // roadpath.js — toán đường DÙNG CHUNG cho cliff.js (khắc ledge), roads.js
-// (dựng mặt đường/mòn) và các module scatter (trừ hành lang).
-//  - ĐƯỜNG NHỰA: chỉ còn đường vòng đảo ở vùng thấp, kết thúc ở chân đồi
-//    (điểm đầu lối mòn). KHÔNG còn đường nhựa lên đồi (theo ý user).
-//  - LỐI MÒN ĐẤT: từ điểm cuối đường nhựa uốn zic-zac lên hải đăng như đường
+// (dựng mặt đường/mòn), car.js (xe chạy) và các module scatter (trừ hành lang).
+//  - ĐƯỜNG VÒNG KHÉP KÍN quanh đảo ở vùng thấp — tuyến tham quan đi qua các
+//    điểm nhấn: chân đồi hải đăng P1 (= điểm đầu lối mòn, t=0) → sườn đông-bắc
+//    → cụm dừa bãi bắc P3 → ven biển bắc → cụm dừa tây-nam P3 → bãi cát phía
+//    tây → làng chài P2 → cụm dừa bãi nam P3 → khép vòng về chân đồi.
+//    Đường cong CatmullRom KHÉP KÍN (closed=true); mọi hàm t đều wrap theo vòng.
+//  - LỐI MÒN ĐẤT: từ điểm t=0 (chân đồi) uốn zic-zac lên hải đăng như đường
 //    người đi bộ thật — hẹp, mặt đất nện, mép mềm, không viền/vạch.
-// Cao độ bám địa hình — đường nhựa một phần đắp nổi/cắt vào sườn đồi (ledge),
+// Cao độ bám địa hình — đường vòng một phần đắp nổi/cắt vào sườn đồi (ledge),
 // lối mòn drap hoàn toàn theo đất (không khắc ledge).
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
@@ -18,36 +21,57 @@ export const TH_MAX = Math.PI * 2;  // giữ export cho tương thích
 export const LEDGE_HALF = 4.6;
 export const LEDGE_BLEND = 3.6;
 
+// t tại chân đồi hải đăng = điểm đầu lối mòn đất.
+export const TRAILHEAD_T = 0;
+
 function V(x, y, z) { return new THREE.Vector3(x, y, z); }
 
-// Dựng control points ĐƯỜNG NHỰA: đường làng quanh co qua đồi thấp từ bãi biển
-// tới chân mũi đá — điểm cuối là điểm đầu lối mòn (vạt đất ở chân đồi).
-function buildControlPoints() {
-  const raw = [
-    V(-30, 2.6, 95), V(-8, 3.8, 88), V(22, 5.8, 80), V(48, 7.8, 64),
-    V(64, 10.0, 46), V(74, 11.8, 28),
-  ];
+// Control points ĐƯỜNG VÒNG (x,z) — thứ tự quanh đảo, KHÉP KÍN.
+// Điểm [0] = chân đồi hải đăng (điểm đầu lối mòn).
+const LOOP_XZ = [
+  [74, 28],     // P1: chân đồi hải đăng
+  [46, -22],    // sườn đông-bắc (cách mũi đá ~45m)
+  [40, -52],    // đông-bắc
+  [28, -72],    // gần cụm dừa bãi bắc P3
+  [-5, -88],    // ven biển bắc
+  [-48, -80],   // tây-bắc
+  [-88, -66],   // gần cụm dừa tây-nam P3
+  [-112, -30],  // ven biển tây
+  [-116, 2],    // bãi cát phía tây
+  [-92, -16],   // rìa nam làng chài P2
+  [-70, -20],   // qua làng chài (phía nam cụm nhà)
+  [-50, -14],   // rìa đông-nam làng
+  [-45, 25],    // đông-nam
+  [-40, 60],    // nam
+  [-24, 97],    // gần cụm dừa bãi nam P3
+  [-8, 88],     // (đoạn cũ)
+  [22, 80],     // (đoạn cũ)
+  [48, 64],     // (đoạn cũ)
+];
 
-  // Snap cao độ bám địa hình + leo đơn điệu (không bao giờ tụt).
-  const pts = [];
-  let prevY = -Infinity;
-  for (let i = 0; i < raw.length; i++) {
-    const p = raw[i];
-    const t = baseTerrainHeight(p.x, p.z);
-    let y = Math.min(Math.max(p.y, t - 2.0), t + 6.0);  // bám địa hình ±
-    y = Math.max(y, prevY + 0.12);   // leo đơn điệu
-    pts.push(V(p.x, y, p.z));
-    prevY = y;
+function buildControlPoints() {
+  // Cao độ bám địa hình + làm mịn vòng tròn (không leo đơn điệu như đường hở —
+  // vòng khép kín phải về lại cao độ ban đầu).
+  const pts = LOOP_XZ.map(([x, z]) => V(x, baseTerrainHeight(x, z), z));
+  for (let pass = 0; pass < 4; pass++) {
+    const ys = pts.map((p) => p.y);
+    const n = pts.length;
+    for (let i = 0; i < n; i++) {
+      pts[i].y = ys[i] * 0.5 + ys[(i - 1 + n) % n] * 0.25 + ys[(i + 1) % n] * 0.25;
+    }
   }
   return pts;
 }
 
+// Chuẩn hoá t về [0,1) theo vòng khép kín.
+function wrapT(t) { return ((t % 1) + 1) % 1; }
+
 let _curve = null, _samples = null, _bounds = null;
 function getCurve() {
   if (!_curve) {
-    _curve = new THREE.CatmullRomCurve3(buildControlPoints(), false, 'centripetal', 0.5);
-    _samples = _curve.getSpacedPoints(720);
-    // bounding box để roadParam loại nhanh điểm ở xa đường
+    _curve = new THREE.CatmullRomCurve3(buildControlPoints(), true, 'centripetal', 0.5);
+    const raw = _curve.getSpacedPoints(720);
+    _samples = raw.slice(0, 720); // bỏ điểm cuối trùng điểm đầu (đường khép kín)
     let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
     for (const p of _samples) {
       if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x;
@@ -58,13 +82,17 @@ function getCurve() {
   return _curve;
 }
 function getSamples() { getCurve(); return _samples; }
+function sampleCount() { getCurve(); return _samples.length; }
 
-// Cao độ mặt ledge theo t ∈ [0,1] — DÙNG CHUNG cho cliff.js (khắc) và roads.js.
+// Curve đường vòng (khép kín) — cho car.js lái xe theo.
+export function roadCurve() { getCurve(); return _curve; }
+
+// Cao độ mặt ledge theo t — DÙNG CHUNG cho cliff.js (khắc) và roads.js.
 export function ledgeHeightAt(t) {
-  const s = getSamples();
-  const f = Math.min(Math.max(t, 0), 1) * (s.length - 1);
-  const i = Math.floor(f), k = f - i;
-  const a = s[i], b = s[Math.min(i + 1, s.length - 1)];
+  const s = getSamples(), N = s.length;
+  const f = wrapT(t) * N;
+  const i0 = Math.floor(f) % N, i1 = (i0 + 1) % N, k = f - Math.floor(f);
+  const a = s[i0], b = s[i1];
   return a.y + (b.y - a.y) * k;
 }
 
@@ -75,16 +103,16 @@ export function roadY(t) {
 
 // Nửa rộng ledge biến thiên nhẹ theo t — bậc đường không đều như đèo thật.
 export function ledgeHalfAt(th) {
-  const t = th / TH_MAX;
+  const t = wrapT(th / TH_MAX);
   return LEDGE_HALF * (1 + 0.35 * (vnoise(t * 7.3 + 2.0, 4.4) - 0.5));
 }
 
-// Điểm trên tim đường tại t ∈ [0,1].
+// Điểm trên tim đường tại t (wrap theo vòng).
 export function roadPointAt(t) {
-  const s = getSamples();
-  const f = Math.min(Math.max(t, 0), 1) * (s.length - 1);
-  const i = Math.floor(f), k = f - i;
-  const a = s[i], b = s[Math.min(i + 1, s.length - 1)];
+  const s = getSamples(), N = s.length;
+  const f = wrapT(t) * N;
+  const i0 = Math.floor(f) % N, i1 = (i0 + 1) % N, k = f - Math.floor(f);
+  const a = s[i0], b = s[i1];
   return {
     x: a.x + (b.x - a.x) * k,
     y: a.y + (b.y - a.y) * k,
@@ -92,29 +120,29 @@ export function roadPointAt(t) {
   };
 }
 
-// Tham số đường gần nhất cho điểm (x,z): { t, th, dist }.
-// coarse-to-fine trên samples đã spacing đều + loại nhanh bằng bounding box.
+// Tham số đường gần nhất cho điểm (x,z): { t, th, dist } — tìm trên vòng kín.
 export function roadParam(x, z) {
-  const s = getSamples();
+  const s = getSamples(), N = s.length;
   const B = _bounds;
   if (x < B.x0 || x > B.x1 || z < B.z0 || z > B.z1) return null;
   let bi = 0, bd = Infinity;
   const STEP = 12;
-  for (let i = 0; i < s.length; i += STEP) {
+  for (let i = 0; i < N; i += STEP) {
     const dx = x - s[i].x, dz = z - s[i].z;
     const d = dx * dx + dz * dz;
     if (d < bd) { bd = d; bi = i; }
   }
-  const lo = Math.max(0, bi - STEP), hi = Math.min(s.length - 1, bi + STEP);
-  for (let i = lo; i <= hi; i++) {
+  for (let k = -STEP; k <= STEP; k++) {
+    const i = (bi + k + N) % N;
     const dx = x - s[i].x, dz = z - s[i].z;
     const d = dx * dx + dz * dz;
     if (d < bd) { bd = d; bi = i; }
   }
-  // chiếu lên đoạn thẳng giữa 2 sample kề để dist chính xác hơn
-  const a = s[Math.max(0, bi - 1)], b = s[bi], c = s[Math.min(s.length - 1, bi + 1)];
-  let bestD = bd, bestT = bi / (s.length - 1);
-  for (const [p, q, ti, tj] of [[a, b, (bi - 1) / (s.length - 1), bi / (s.length - 1)], [b, c, bi / (s.length - 1), (bi + 1) / (s.length - 1)]]) {
+  // chiếu lên 2 đoạn kề (có wrap) để dist chính xác hơn
+  let bestD = bd, bestT = bi / N;
+  for (const off of [-1, 0]) {
+    const pi = (bi + off + N) % N, qi = (bi + off + 1 + N) % N;
+    const p = s[pi], q = s[qi];
     const vx = q.x - p.x, vz = q.z - p.z;
     const len2 = vx * vx + vz * vz;
     if (len2 < 1e-9) continue;
@@ -122,7 +150,7 @@ export function roadParam(x, z) {
     u = Math.min(Math.max(u, 0), 1);
     const px = p.x + vx * u, pz = p.z + vz * u;
     const d = (x - px) * (x - px) + (z - pz) * (z - pz);
-    if (d < bestD) { bestD = d; bestT = ti + (tj - ti) * u; }
+    if (d < bestD) { bestD = d; bestT = wrapT((pi + u) / N); }
   }
   return { t: bestT, th: bestT * TH_MAX, dist: Math.sqrt(bestD) };
 }
@@ -136,8 +164,8 @@ export function ledgeFactor(dist, halfW) {
   return 1 - t * t * (3 - 2 * t);
 }
 
-// === LỐI MÒN ĐẤT lên hải đăng (thay thế đường nhựa xoắn đã bỏ, theo ý user) ===
-// Từ điểm cuối đường nhựa (chân đồi) uốn ZIC-ZAC lên đỉnh theo sườn tây-nam
+// === LỐI MÒN ĐẤT lên hải đăng (theo ý user: bỏ đường nhựa lên đồi) ===
+// Từ điểm t=0 đường vòng (chân đồi) uốn ZIC-ZAC lên đỉnh theo sườn tây-nam
 // (phía thoải, tránh mặt đá dựng phía biển): KHÔNG xoắn ốc đều — góc dao động
 // + bán kính gợn noise mạnh như đường người đi bộ thật. Hẹp (~1.9m), mặt đất
 // nện, mép mềm tan vào cỏ (xem roads.js).
@@ -163,7 +191,7 @@ function buildTrailPoints() {
   // 32→7m, uốn lượn ±2.5m tạo dáng đi bộ tự nhiên. Góc ĐƠN ĐIỆU tăng nên
   // KHÔNG BAO GIỜ tự cắt. Địa hình trong hành lang được san phẳng theo
   // profile (như dọn đường mòn thật) nên lối mòn luôn bám đất.
-  const end = roadPointAt(1);   // điểm cuối đường nhựa = điểm đầu lối mòn
+  const end = roadPointAt(TRAILHEAD_T);   // chân đồi = điểm đầu lối mòn
   const TURN = 4.0, R0 = 32, R1 = 7;
   const a0 = Math.atan2(end.z - CZ, end.x - CX);
   const N = 48, route = [];
@@ -179,9 +207,9 @@ function buildTrailPoints() {
     if (i === 0) { x = end.x; z = end.z; }
     route.push({ x, z });
   }
-  // 2. cao độ: tuyến tính mượt từ mặt đường nhựa lên đỉnh (độ dốc ~22%,
+  // 2. cao độ: tuyến tính mượt từ mặt đường vòng lên đỉnh (độ dốc ~22%,
   // có bậc đá ở đoạn dốc) — địa hình sẽ được san theo profile này
-  const y0 = ledgeHeightAt(1) + 0.3, y1 = CONFIG.cliff.padHeight;
+  const y0 = ledgeHeightAt(TRAILHEAD_T) + 0.3, y1 = CONFIG.cliff.padHeight;
   return route.map((p, i) => {
     const t = i / N;
     const e = t * t * (3 - 2 * t) * 0.25 + t * 0.75; // easing nhẹ ở 2 đầu

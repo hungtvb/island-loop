@@ -27,7 +27,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #0b2038;
 
 /* Cụm nút điều khiển */
 #controls { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 20;
-  display: flex; gap: 8px; }
+  display: flex; gap: 8px; max-width: 96vw; overflow-x: auto; scrollbar-width: none;
+  padding: 2px; }
+#controls::-webkit-scrollbar { display: none; }
 #controls button { border: 1px solid rgba(255,255,255,0.22); cursor: pointer;
   background: rgba(10, 30, 55, 0.6); backdrop-filter: blur(8px); color: #fff;
   font-size: 14px; padding: 10px 16px; border-radius: 99px; white-space: nowrap; }

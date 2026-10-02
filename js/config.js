@@ -41,8 +41,9 @@ export const CONFIG = {
   lighthouse: { pos: [88, 30, -5], model: 'models/lighthouse_game.glb' },
   house: { pos: [83, 30, 0], rotY: -0.785398, model: 'models/keeper_house_game.glb' },
 
-  // Đường nhựa P1: chỉ còn đường vòng đảo ở vùng thấp, kết thúc ở chân đồi
-  // (điểm đầu lối mòn đất lên hải đăng). KHÔNG còn đường nhựa lên đồi.
+  // Đường vòng P6: KHÉP KÍN quanh đảo ở vùng thấp — tuyến tham quan qua chân
+  // đồi hải đăng P1 (= điểm đầu lối mòn), cụm dừa 3 bãi P3, bãi cát phía tây,
+  // làng chài P2. Xe tự chạy dọc tim đường (xem car.js).
   road: { width: 6.4, lift: 0.5, samples: 700, ribbonSegs: 800 },
 
   // Lối mòn đất lên hải đăng (thay đường nhựa xoắn đã bỏ): hẹp ~1.9m, mặt đất

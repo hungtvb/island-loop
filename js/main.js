@@ -7,10 +7,12 @@ import { buildSea } from './water.js';
 import { buildTerrain, scatterRocks, setTrailSamples as setRockTrailSamples } from './cliff.js';
 import { buildRoad, buildTrail } from './roads.js';
 import { buildLighthouse, buildKeeperHouse } from './lighthouse.js';
-import { plantJabami, plantPalms, plantGrass, plantCliffGreens, setTrailSamples as setVegTrailSamples } from './vegetation.js';
+import { plantJabami, plantPalms, plantGrass, plantCliffGreens, plantRoadCorridor, setTrailSamples as setVegTrailSamples } from './vegetation.js';
 import { buildVillage } from './village.js';
 import { buildPalmForest } from './palmforest.js';
 import { buildAnimals } from './animals.js';
+import { buildCar } from './car.js';
+import { roadCurve } from './roadpath.js';
 import { UI } from './ui.js';
 
 const T0 = performance.now();
@@ -51,13 +53,36 @@ let lighthouseTick = null;
 let villageTick = null;
 let palmTick = null;
 let animalTick = null;
+let carApi = null;
+
+// P6: camera follow xe — 'free' (orbit như cũ) | 'far' (theo từ xa) | 'chase' (sát đuôi)
+let camMode = 'free';
+function setCamMode(m) {
+  if ((m === 'far' || m === 'chase') && !carApi) return; // xe chưa nạp xong
+  camMode = m;
+  viewTarget = null;
+  controls.enabled = (m === 'free');
+  ui.setCamActive(m);
+}
 
 ui.onPause((p) => { paused = p; });
 ui.onOrbit((on) => { controls.autoRotate = on; });
+ui.onCamMode((m) => setCamMode(m));
+ui.onCarSwitch(() => {
+  if (!carApi) return;
+  const other = carApi.carId === 'jeep' ? 'van' : 'jeep';
+  if (carApi.setCar(other)) ui.setCarLabel(carApi.carLabel());
+});
+window.addEventListener('keydown', (e) => {
+  if (e.key === '1') setCamMode('far');
+  else if (e.key === '2') setCamMode('chase');
+  else if (e.key === '0') setCamMode('free');
+});
 
 // Bay mượt tới góc nhìn preset
 let viewTarget = null;
 ui.onView((v) => {
+  if (camMode !== 'free') setCamMode('free'); // preset góc nhìn = về orbit
   viewTarget = {
     pos: new THREE.Vector3(...CONFIG.camera[v].pos),
     tgt: new THREE.Vector3(...CONFIG.camera[v].tgt),
@@ -190,6 +215,11 @@ function finishBoot(forced) {
     if (done >= total) { if (note) ui.bgNote(note); else ui.bgNoteDone(); }
     else ui.bgNote(note || `Đang nạp động vật… ${done}/${total}`);
   }), (a) => { animalTick = a; counts.animals = a.counts; });
+  // P6: xe tự chạy — nạp nền sau boot, không chặn cảnh
+  bgLoad('Xe P6', () => buildCar(scene, roadCurve(), roadLen, (done, total, note) => {
+    if (done >= total) ui.bgNoteDone();
+    else ui.bgNote(note || `Đang nạp xe… ${done}/${total}`);
+  }), (c) => { carApi = c; if (c) ui.setCarLabel(c.carLabel()); });
 }
 
 async function boot() {
@@ -204,6 +234,7 @@ async function boot() {
     ['Cây phủ sườn đá', 0.79, async () => { counts.cliff = await plantCliffGreens(scene, roadSamples); }],
     ['Rừng dừa', 0.84, async () => { counts.palm = await plantPalms(scene, roadSamples); }],
     ['Cỏ dại', 0.90, async () => { counts.grass = await plantGrass(scene, roadSamples); }],
+    ['Hành lang cây', 0.94, async () => { counts.corridor = await plantRoadCorridor(scene, roadSamples); }],
   ];
   for (const [name, frac, fn] of steps) await step(name, frac, fn);
   finishBoot(false);
@@ -215,6 +246,10 @@ const clock = new THREE.Clock();
 // Render + toDataURL đồng bộ trong cùng một task — không phụ thuộc rAF/compositor.
 window.__P1_CAM__ = { camera, controls };
 window.__P1_SCENE__ = scene;
+window.__CAM__ = { get mode() { return camMode; }, setMode: (m) => setCamMode(m) };
+const _followFlat = new THREE.Vector3();
+const _followDes = new THREE.Vector3();
+const _followLook = new THREE.Vector3();
 window.__P1_SHOT__ = () => {
   renderer.render(scene, camera);
   return renderer.domElement.toDataURL('image/png');
@@ -235,6 +270,7 @@ function animate() {
     if (villageTick) villageTick.update(dt);
     if (palmTick) palmTick.update(dt);
     if (animalTick) animalTick.update(dt);
+    if (carApi) carApi.update(dt);
   }
   if (viewTarget) {
     const k = 1 - Math.exp(-3 * dt);
@@ -242,7 +278,29 @@ function animate() {
     controls.target.lerp(viewTarget.tgt, k);
     if (camera.position.distanceTo(viewTarget.pos) < 0.5) viewTarget = null;
   }
-  controls.update();
+  if (camMode === 'free') {
+    controls.update();
+  } else if (carApi && carApi.ready) {
+    // P6: camera follow xe — far: cao + xa thấy toàn cảnh; chase: sát đuôi
+    const cp = carApi.getPos(), cf = carApi.getForward();
+    _followFlat.set(cf.x, 0, cf.z).normalize();
+    let kk;
+    if (camMode === 'far') {
+      _followDes.copy(cp).addScaledVector(_followFlat, -30);
+      _followDes.y = cp.y + 17;
+      _followLook.copy(cp).addScaledVector(_followFlat, 8);
+      kk = 1 - Math.exp(-2.5 * dt);
+    } else {
+      _followDes.copy(cp).addScaledVector(_followFlat, -8);
+      _followDes.y = cp.y + 3.4;
+      _followLook.copy(cp).addScaledVector(_followFlat, 12);
+      _followLook.y += 1.2;
+      kk = 1 - Math.exp(-5 * dt);
+    }
+    camera.position.lerp(_followDes, kk);
+    controls.target.lerp(_followLook, kk);
+    camera.lookAt(controls.target);
+  }
   // Loader che toàn bộ canvas: không raster cảnh 3D đang dở trong lúc chờ/parse GLB.
   // Tránh SwiftShader hoặc GPU mobile giành main thread giữa các bước tải.
   if (!loading && !SOFTWARE_RENDERER) renderer.render(scene, camera);
