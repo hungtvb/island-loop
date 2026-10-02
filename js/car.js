@@ -96,11 +96,58 @@ function buildWheelPivots(root, wheelNames, steerNames) {
   return out;
 }
 
-// Sơn lại Jeep theo ý Tony: xanh quân đội đậm, bánh xe đen.
-// (Tạm dùng màu solid thay camo để đảm bảo xe hiện; camo procedural sẽ làm lại sau)
+// Tạo texture rằn ri quân đội tự nhiên hơn (màu trầm, đốm nhỏ, có nhiễu)
+function makeCamoTexture() {
+  try {
+    const S = 512;
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = S;
+    const ctx = cv.getContext('2d');
+    // nền xanh olive trầm
+    ctx.fillStyle = '#3d4229';
+    ctx.fillRect(0, 0, S, S);
+    // màu rằn ri trầm tự nhiên (woodland)
+    const colors = ['#2a2f1e', '#4a3f2a', '#1f2318', '#55502e'];
+    // đốm nhỏ, méo mó tự nhiên
+    for (let i = 0; i < 90; i++) {
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.beginPath();
+      const cx = Math.random() * S, cy = Math.random() * S;
+      const r = 12 + Math.random() * 28;
+      for (let a = 0; a < Math.PI * 2; a += 0.4) {
+        const rr = r * (0.5 + Math.random() * 0.8);
+        const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr * 0.7;
+        if (a === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    // thêm nhiễu hạt cho tự nhiên
+    const img = ctx.getImageData(0, 0, S, S);
+    const d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const n = (Math.random() - 0.5) * 18;
+      d[i] += n; d[i+1] += n; d[i+2] += n;
+    }
+    ctx.putImageData(img, 0, 0);
+    const tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(3, 3);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  } catch (e) {
+    console.warn('Camo texture failed, using solid color:', e.message);
+    return null;
+  }
+}
+
+// Sơn lại Jeep: rằn ri quân đội, bánh xe đen.
+// Nếu tạo camo lỗi thì dùng màu solid để xe vẫn hiện.
 function repaintJeep(root) {
-  const ARMY_GREEN = 0x4b5320; // xanh olive quân đội
   const BLACK = 0x141414;
+  const FALLBACK_GREEN = 0x4b5320;
+  let camoTex = null;
+  try { camoTex = makeCamoTexture(); } catch (e) { camoTex = null; }
   const BODY_MATS = ['carpaint', 'rubiconnone1', 'material', 'material_9', 'extra'];
   root.traverse((o) => {
     if (!o.isMesh) return;
@@ -110,10 +157,15 @@ function repaintJeep(root) {
       const nm = (m.name || '').toLowerCase();
       if (nm.includes('glass') || nm.includes('glows') || nm.includes('plate') || nm.includes('interior') || nm.includes('badges')) continue;
       if (BODY_MATS.some((b) => nm.includes(b))) {
-        m.map = null;
-        m.color.setHex(ARMY_GREEN);
-        m.metalness = 0.3;
-        m.roughness = 0.6;
+        if (camoTex) {
+          m.map = camoTex;
+          m.color.setHex(0xffffff);
+        } else {
+          m.map = null;
+          m.color.setHex(FALLBACK_GREEN);
+        }
+        m.metalness = 0.15;
+        m.roughness = 0.75;
         m.needsUpdate = true;
       } else if (nm.includes('rim') || nm.includes('tire') || nm.includes('under')) {
         m.map = null;
