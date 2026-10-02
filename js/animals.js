@@ -349,6 +349,10 @@ async function buildForestAnimals(scene, rng, tickers, counts, markers, hooks) {
   for (const [key, label, len, x, z, ry] of spots) {
     const gltf = await loadSafe(AM[key], label, hooks);
     if (!gltf) continue;
+    // Model tách từ pack nằm nghiêng (trục Z-up) — xoay +90° quanh Z cho đứng
+    // lên TRƯỚC khi fitToSize chuẩn hoá bbox.
+    gltf.scene.rotation.z = Math.PI / 2;
+    gltf.scene.updateMatrixWorld(true);
     const g = fitToSize(gltf.scene, len);
     const gy = meshHeight(x, z);
     g.position.set(x, gy, z);
