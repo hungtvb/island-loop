@@ -116,28 +116,6 @@ function makeTrailTexture() {
   return tex;
 }
 
-function makeDiscTexture() {
-  const c = document.createElement('canvas');
-  c.width = c.height = 128;
-  const ctx = c.getContext('2d');
-  const g = ctx.createRadialGradient(64, 64, 8, 64, 64, 64);
-  g.addColorStop(0, 'rgba(155,124,82,1)');
-  g.addColorStop(0.62, 'rgba(152,121,80,0.95)');
-  g.addColorStop(1, 'rgba(150,118,78,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 128, 128);
-  for (let i = 0; i < 200; i++) {
-    const a = Math.random() * Math.PI * 2, r = Math.random() * 58;
-    const x = 64 + Math.cos(a) * r, y = 64 + Math.sin(a) * r;
-    const v = 110 + Math.random() * 60 | 0;
-    ctx.fillStyle = `rgba(${v},${v * 0.78 | 0},${v * 0.55 | 0},0.25)`;
-    ctx.fillRect(x, y, 2, 2);
-  }
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-}
-
 export function buildTrail(scene) {
   const T = CONFIG.trail;
   const pts = [];
@@ -183,20 +161,8 @@ export function buildTrail(scene) {
   trail.receiveShadow = true;
   scene.add(trail);
 
-  // vạt đất ở điểm đầu lối mòn — đường vòng giờ KHÉP KÍN (không còn mép nhựa
-  // cụt) nên đĩa này đóng vai trò ngã ba đất nơi lối mòn rẽ lên đồi: đặt NGAY
-  // TRÊN mặt đường (+lift) thay vì theo terrainHeight — trước đây nó chìm 0.4m
-  // dưới mặt đường nên nhìn như chỗ vá lỗi.
-  const start = trailPointAt(0);
-  const disc = new THREE.Mesh(
-    new THREE.CircleGeometry(3.4, 28),
-    new THREE.MeshStandardMaterial({ map: makeDiscTexture(), transparent: true, depthWrite: false, roughness: 1, metalness: 0 })
-  );
-  disc.rotation.x = -Math.PI / 2;
-  disc.position.set(start.x, ledgeHeightAt(0) + CONFIG.road.lift + 0.03, start.z);
-  disc.renderOrder = 2;
-  disc.receiveShadow = true;
-  scene.add(disc);
+  // (Đã gỡ đĩa đất ở điểm đầu lối mòn — đường vòng giờ khép kín nên không còn
+  // mép nhựa cụt cần che; đĩa đất để lại vết nâu trên mặt đường nhựa.)
 
   // bậc đá tự nhiên ở những đoạn dốc nhất (cách nhau ≥6m, tối đa 9 bậc)
   const spaced = curve.getSpacedPoints(220);
