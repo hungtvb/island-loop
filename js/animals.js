@@ -370,7 +370,7 @@ async function buildForestAnimals(scene, rng, mixers, tickers, counts, markers, 
     const g = fitToSize(gltf.scene, len);
     const gy = meshHeight(x, z);
     // Heo/cáo: bbox bind-pose sai (đáy không ở chân) → hạ thủ công cho chạm đất
-    const yFix = key === 'boar' ? -0.7 : key === 'fox' ? -0.48 : 0;
+    const yFix = key === 'boar' ? -0.18 : key === 'fox' ? -0.48 : 0;
     g.position.set(x, gy + yFix, z);
     g.rotation.y = ry;
     scene.add(g);
