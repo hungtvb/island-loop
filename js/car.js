@@ -96,11 +96,42 @@ function buildWheelPivots(root, wheelNames, steerNames) {
   return out;
 }
 
-// Sơn lại Jeep theo ý Tony: toàn thân xanh lá đậm tự nhiên, bánh xe đen.
-// Model gốc thân dùng nhầm texture xám → sơn đều tất cả panel thân.
+// Tạo texture rằn ri quân đội (woodland camo) bằng canvas
+function makeCamoTexture() {
+  const S = 512;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = S;
+  const ctx = cv.getContext('2d');
+  // nền olive drab
+  ctx.fillStyle = '#4b5320';
+  ctx.fillRect(0, 0, S, S);
+  // các màu rằn ri
+  const colors = ['#2d3a1f', '#5a4a2f', '#1a1a1a', '#3d4a22'];
+  // vẽ các đốm không đều
+  for (let i = 0; i < 60; i++) {
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.beginPath();
+    const cx = Math.random() * S, cy = Math.random() * S;
+    const r = 20 + Math.random() * 50;
+    // đốm méo mó (không tròn đều)
+    for (let a = 0; a < Math.PI * 2; a += 0.3) {
+      const rr = r * (0.6 + Math.random() * 0.7);
+      const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr;
+      if (a === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(2, 2);
+  return tex;
+}
+
+// Sơn lại Jeep theo ý Tony: rằn ri quân đội, bánh xe đen.
 function repaintJeep(root) {
-  const GREEN = 0x2f4f2f; // xanh lá đậm tự nhiên (dark sea green)
   const BLACK = 0x141414;
+  const camoTex = makeCamoTexture();
   // tất cả vật liệu thân xe (trừ kính, đèn, biển số, nội thất)
   const BODY_MATS = ['carpaint', 'rubiconnone1', 'material', 'material_9', 'extra'];
   root.traverse((o) => {
@@ -111,10 +142,10 @@ function repaintJeep(root) {
       const nm = (m.name || '').toLowerCase();
       if (nm.includes('glass') || nm.includes('glows') || nm.includes('plate') || nm.includes('interior') || nm.includes('badges')) continue;
       if (BODY_MATS.some((b) => nm.includes(b))) {
-        m.map = null;
-        m.color.setHex(GREEN);
-        m.metalness = 0.4;
-        m.roughness = 0.5;
+        m.map = camoTex;
+        m.color.setHex(0xffffff);
+        m.metalness = 0.2;
+        m.roughness = 0.7;
         m.needsUpdate = true;
       } else if (nm.includes('rim') || nm.includes('tire') || nm.includes('under')) {
         m.map = null;
