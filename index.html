@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Island Loop — P1: Mũi Hải Đăng</title>
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "./lib/three.module.js",
+  "three/addons/": "./lib/addons/"
+} }
+</script>
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<div id="loader">
+  <h1>ISLAND LOOP · P1</h1>
+  <p>Mũi Hải Đăng đang được dựng…</p>
+  <div id="load-bar"><div id="load-bar-fill"></div></div>
+  <div id="load-row"><span id="load-label">Chuẩn bị</span><span id="load-pct">0%</span></div>
+</div>
+
+<div id="topbar">ISLAND LOOP · P1<small>Mũi Hải Đăng — đường xoắn ốc</small></div>
+
+<div id="controls">
+  <button id="btn-pause">⏸ Tạm dừng</button>
+  <button id="btn-view">👁 Hải đăng</button>
+  <button id="btn-orbit">🔁 Tự xoay: bật</button>
+</div>
+
+<div id="metrics"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
