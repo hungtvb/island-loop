@@ -332,6 +332,50 @@ async function buildDog(scene, rng, tickers, counts, markers, hooks) {
 }
 
 // ---------------------------------------------------------------------------
+// THÚ RỪNG — hươu, lợn rừng, cáo, thỏ trong 3 cụm rừng dừa P3 (tách từ pack 100)
+// Đứng/gặm cỏ nhẹ, thỏ nhảy chập chững. Tránh đường vòng ≥8m.
+async function buildForestAnimals(scene, rng, tickers, counts, markers, hooks) {
+  const spots = [
+    // [model, label, targetLen, x, z, rotY]
+    ['deer', 'Hươu', 1.6, 30, -94, 0.8],
+    ['deer', 'Hươu', 1.6, 22, -102, -2.1],
+    ['boar', 'Lợn rừng', 1.1, -114, -58, 1.9],
+    ['boar', 'Lợn rừng', 1.1, -122, -66, -0.7],
+    ['fox', 'Cáo', 0.8, 6, 102, 2.6],
+    ['rabbit', 'Thỏ', 0.45, 28, -90, 1.2],
+    ['rabbit', 'Thỏ', 0.45, -2, 110, -1.4],
+  ];
+  let n = 0;
+  for (const [key, label, len, x, z, ry] of spots) {
+    const gltf = await loadSafe(AM[key], label, hooks);
+    if (!gltf) continue;
+    const g = fitToSize(gltf.scene, len);
+    const gy = meshHeight(x, z);
+    g.position.set(x, gy, z);
+    g.rotation.y = ry;
+    scene.add(g);
+    markers.push({ label: key + n, obj: g });
+    const t0 = performance.now() + n * 1300;
+    const isRabbit = key === 'rabbit';
+    tickers.push(() => {
+      const t = (performance.now() - t0) / 1000;
+      if (isRabbit) {
+        // thỏ: nhảy chập chững từng quãng
+        const hop = Math.max(0, Math.sin(t * 2.4));
+        g.position.y = gy + hop * hop * 0.12;
+        g.rotation.x = -hop * 0.25;
+      } else {
+        // thú lớn: thở nhẹ + lúc lắc đầu gặm cỏ
+        g.position.y = gy + 0.01 * Math.sin(t * 1.1 + n);
+        g.rotation.x = Math.pow(Math.max(0, Math.sin(t * 0.5 + n * 2)), 4) * 0.28;
+      }
+    });
+    n++;
+  }
+  counts.forest = n;
+}
+
+// ---------------------------------------------------------------------------
 // CUA — 5 con trên bãi cát phía tây (gần thuyền), bò ngang chậm
 async function buildCrabs(scene, rng, tickers, counts, markers, hooks) {
   const gltf = await loadSafe(AM.crab, 'Cua', hooks);
@@ -443,7 +487,7 @@ export async function buildAnimals(scene, onProgress) {
   // Thứ tự NHẸ TRƯỚC (~1.6MB: bướm/cua/rùa/cá/gà/mèo) để user thấy con vật sớm;
   // chó (3.9MB) + hải âu (3.3MB) tải sau cùng.
   // Mỗi nhóm độc lập: lỗi nhóm nào bỏ qua nhóm đó, không ảnh hưởng nhóm khác.
-  const total = 6;
+  const total = 7;
   let cur = 0;
   const fails = []; // [{name, msg}] — hiện rõ cho user khi xong, không trôi mất
   const hooks = {
@@ -462,6 +506,7 @@ export async function buildAnimals(scene, onProgress) {
     ['Gà & mèo', () => buildChickenCat(scene, rng, tickers, counts, markers, hooks)],
     ['Chó', () => buildDog(scene, rng, tickers, counts, markers, hooks)],
     ['Hải âu', () => buildSeagulls(scene, rng, mixers, tickers, counts, markers, hooks)],
+    ['Thú rừng', () => buildForestAnimals(scene, rng, tickers, counts, markers, hooks)],
   ];
   if (onProgress) onProgress(0, total, 'Đang nạp động vật…');
   for (const [label, g] of groups) {

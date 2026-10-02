@@ -90,6 +90,10 @@ export const CONFIG = {
       dog: 'models/animals/black_sausage_dog_cute_stylized_pet_animal_game.glb',
       chicken: 'models/animals/handpainted_rooster_and_hen_game.glb',
       cat: 'models/animals/orange_stray_kitten_game.glb',
+      deer: 'models/animals/pack_deer_game.glb',
+      boar: 'models/animals/pack_boar_game.glb',
+      fox: 'models/animals/pack_fox_game.glb',
+      rabbit: 'models/animals/pack_rabbit_game.glb',
     },
   },
 
