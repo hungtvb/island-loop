@@ -366,15 +366,23 @@ async function buildForestAnimals(scene, rng, mixers, tickers, counts, markers, 
       gltf.scene.rotation.x = -Math.PI / 2;
       gltf.scene.updateMatrixWorld(true);
     }
+    // Heo và cáo file gốc bị dựng đứng (trục Y dài nhất) — xoay nằm xuống
+    if (key === 'boar' || key === 'fox') {
+      gltf.scene.rotation.x = -Math.PI / 2;
+      gltf.scene.updateMatrixWorld(true);
+    }
     const g = fitToSize(gltf.scene, len);
     const gy = meshHeight(x, z);
     g.position.set(x, gy, z);
     g.rotation.y = ry;
     scene.add(g);
     markers.push({ label: key + n, obj: g });
-    // Nai: chạy animation gặm cỏ thật
-    if (key === 'elk' && gltf.animations.length) {
-      const clip = gltf.animations.find((a) => /eating/i.test(a.name)) || gltf.animations[0];
+    // Animation thật cho các model có clip (heo 11 clip, cáo 1, thỏ 1, nai ăn cỏ)
+    const animKey = key === 'boar' ? /walk/i : key === 'elk' ? /eating/i : null;
+    if (gltf.animations.length && (animKey || ['fox', 'rabbit', 'elk'].includes(key))) {
+      const clip = animKey
+        ? (gltf.animations.find((a) => animKey.test(a.name)) || gltf.animations[0])
+        : gltf.animations[0];
       if (clip) {
         const mixer = new THREE.AnimationMixer(g);
         mixer.clipAction(clip).play();
@@ -384,16 +392,17 @@ async function buildForestAnimals(scene, rng, mixers, tickers, counts, markers, 
     const t0 = performance.now() + n * 1300;
     const isRabbit = key === 'rabbit';
     const isElk = key === 'elk';
-    if (!isElk) { // nai đã có animation thật thì không cần ticker giả
+    const hasRealAnim = ['boar', 'fox', 'rabbit', 'elk'].includes(key) && gltf.animations.length;
+    if (!hasRealAnim) { // có animation thật thì không cần ticker giả
       tickers.push(() => {
         const t = (performance.now() - t0) / 1000;
         if (isRabbit) {
           const hop = Math.max(0, Math.sin(t * 2.4));
-          g.position.y = gy + hop * hop * 0.12;
-          g.rotation.x = -hop * 0.25;
+          g.position.y = gy + hop * hop * 0.06; // nhảy thấp hơn, đỡ lơ lửng
+          g.rotation.x = -hop * 0.2;
         } else {
-          g.position.y = gy + 0.01 * Math.sin(t * 1.1 + n);
-          g.rotation.x = Math.pow(Math.max(0, Math.sin(t * 0.5 + n * 2)), 4) * 0.28;
+          g.position.y = gy + 0.008 * Math.sin(t * 1.1 + n); // thở nhẹ, không lơ lửng
+          g.rotation.x = Math.pow(Math.max(0, Math.sin(t * 0.5 + n * 2)), 4) * 0.2;
         }
       });
     }
