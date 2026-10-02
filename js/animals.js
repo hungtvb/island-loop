@@ -354,9 +354,9 @@ async function buildForestAnimals(scene, rng, mixers, tickers, counts, markers, 
     if (!gltf) continue;
     const isPack = ['deer', 'boar', 'fox', 'rabbit'].includes(key);
     if (isPack) {
-      // Model tách từ pack nằm nghiêng (trục Z-up) — xoay +90° quanh Z cho đứng
-      // lên TRƯỚC khi fitToSize chuẩn hoá bbox.
-      gltf.scene.rotation.z = Math.PI / 2;
+      // Model tách từ pack nằm nghiêng — xoay -90° quanh X cho đứng lên
+      // TRƯỚC khi fitToSize chuẩn hoá bbox (đã kiểm bằng render).
+      gltf.scene.rotation.x = -Math.PI / 2;
       gltf.scene.updateMatrixWorld(true);
     }
     const g = fitToSize(gltf.scene, len);
