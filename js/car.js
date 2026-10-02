@@ -96,30 +96,31 @@ function buildWheelPivots(root, wheelNames, steerNames) {
   return out;
 }
 
-// Sơn lại Jeep theo ý Tony: thân xanh rêu, bánh xe đen.
-// Model gốc thân dùng nhầm texture xám của mâm → gỡ map, sơn màu solid.
+// Sơn lại Jeep theo ý Tony: toàn thân xanh lá đậm tự nhiên, bánh xe đen.
+// Model gốc thân dùng nhầm texture xám → sơn đều tất cả panel thân.
 function repaintJeep(root) {
-  const MOSS_GREEN = 0x4a5d23; // xanh rêu
-  const BLACK = 0x1a1a1a;
+  const GREEN = 0x2f4f2f; // xanh lá đậm tự nhiên (dark sea green)
+  const BLACK = 0x141414;
+  // tất cả vật liệu thân xe (trừ kính, đèn, biển số, nội thất)
+  const BODY_MATS = ['carpaint', 'rubiconnone1', 'material', 'material_9', 'extra'];
   root.traverse((o) => {
     if (!o.isMesh) return;
     const mats = Array.isArray(o.material) ? o.material : [o.material];
     for (const m of mats) {
       if (!m) continue;
       const nm = (m.name || '').toLowerCase();
-      if (nm.includes('carpaint') || nm.includes('rubiconnone1') || nm === 'material' || nm === 'material_9') {
-        // thân xe: xanh rêu solid
+      if (nm.includes('glass') || nm.includes('glows') || nm.includes('plate') || nm.includes('interior') || nm.includes('badges')) continue;
+      if (BODY_MATS.some((b) => nm.includes(b))) {
         m.map = null;
-        m.color.setHex(MOSS_GREEN);
-        m.metalness = 0.3;
-        m.roughness = 0.6;
+        m.color.setHex(GREEN);
+        m.metalness = 0.4;
+        m.roughness = 0.5;
         m.needsUpdate = true;
-      } else if (nm.includes('rim') || nm.includes('tire')) {
-        // bánh xe: đen
+      } else if (nm.includes('rim') || nm.includes('tire') || nm.includes('under')) {
         m.map = null;
         m.color.setHex(BLACK);
-        m.metalness = 0.2;
-        m.roughness = 0.8;
+        m.metalness = 0.1;
+        m.roughness = 0.9;
         m.needsUpdate = true;
       }
     }
