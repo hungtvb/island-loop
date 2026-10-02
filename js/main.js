@@ -186,7 +186,8 @@ function finishBoot(forced) {
   bgLoad('Rừng dừa P3', () => buildPalmForest(scene), (p) => { palmTick = p; counts.palmForest = p.counts; });
   bgLoad('Động vật', () => buildAnimals(scene, (done, total, note) => {
     // Chỉ báo tiến trình nạp nền — loader chính đã gỡ sau ready().
-    if (done >= total) ui.bgNoteDone();
+    // done>=total + còn note = có lỗi: GIỮ pill lại cho user đọc, không tự ẩn.
+    if (done >= total) { if (note) ui.bgNote(note); else ui.bgNoteDone(); }
     else ui.bgNote(note || `Đang nạp động vật… ${done}/${total}`);
   }), (a) => { animalTick = a; counts.animals = a.counts; });
 }

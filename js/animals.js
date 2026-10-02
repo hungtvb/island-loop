@@ -445,11 +445,13 @@ export async function buildAnimals(scene, onProgress) {
   // Mỗi nhóm độc lập: lỗi nhóm nào bỏ qua nhóm đó, không ảnh hưởng nhóm khác.
   const total = 6;
   let cur = 0;
+  const fails = []; // [{name, msg}] — hiện rõ cho user khi xong, không trôi mất
   const hooks = {
     onRetry: (name, attempt) => {
       if (onProgress) onProgress(cur, total, `↻ ${name} — thử lại lần ${attempt + 1}…`);
     },
-    onFail: (name) => {
+    onFail: (name, msg) => {
+      fails.push({ name, msg: msg || '' });
       if (onProgress) onProgress(cur, total, `⚠ ${name} tải lỗi — bỏ qua`);
     },
   };
@@ -463,11 +465,20 @@ export async function buildAnimals(scene, onProgress) {
   ];
   if (onProgress) onProgress(0, total, 'Đang nạp động vật…');
   for (const [label, g] of groups) {
-    try { await g(); } catch (e) { console.warn('[animals] bỏ qua nhóm lỗi:', label, e && e.message); }
+    try { await g(); } catch (e) {
+      const msg = (e && e.message) || String(e);
+      console.warn('[animals] bỏ qua nhóm lỗi:', label, msg);
+      fails.push({ name: label, msg });
+    }
     cur++;
     if (onProgress) onProgress(cur, total, cur >= total ? '' : `Đang nạp động vật… ${cur}/${total} · ${label} ✓`);
   }
-  if (onProgress) onProgress(total, total, '');
+  // Lỗi (nếu có) hiện RÕ và giữ lại trên pill — không tự ẩn như khi thành công.
+  window.__ANIMALS_FAILS__ = fails;
+  if (onProgress) {
+    if (fails.length) onProgress(total, total, '⚠ Không tải được: ' + fails.map((f) => f.name).join(', '));
+    else onProgress(total, total, '');
+  }
 
   window.__ANIMALS__ = { mixers: mixers.length, ...counts };
   window.__ANIMALS_READY__ = true;
