@@ -188,17 +188,22 @@ export function trailBenchFactor(dist) {
 function buildTrailPoints() {
   // 1. tuyến ngang (x,z): đường cong tham số SẠCH — một vòng cung uốn lượn
   // 229° ôm sườn tây-nam-bắc (không qua vách biển đông), bán kính thu dần
-  // 32→7m, uốn lượn ±2.5m tạo dáng đi bộ tự nhiên. Góc ĐƠN ĐIỆU tăng nên
+  // từ chân đồi →7m, uốn lượn ±2.5m tạo dáng đi bộ tự nhiên. Góc ĐƠN ĐIỆU tăng nên
   // KHÔNG BAO GIỜ tự cắt. Địa hình trong hành lang được san phẳng theo
   // profile (như dọn đường mòn thật) nên lối mòn luôn bám đất.
+  // QUAN TRỌNG: bán kính thu vào NHANH ngay từ đầu (t^0.45) để lối mòn tách
+  // khỏi hành lang đường vòng — trước đây nó chạy song song/đè lên đường
+  // ~1/3 chiều dài, băng ghế lối mòn đội địa hình lên mặt đường làm xe chui
+  // qua đất ở khu hải đăng.
   const end = roadPointAt(TRAILHEAD_T);   // chân đồi = điểm đầu lối mòn
-  const TURN = 4.0, R0 = 32, R1 = 7;
+  const TURN = 4.0, R1 = 7;
+  const R0 = Math.hypot(end.x - CX, end.z - CZ); // bán kính thực từ chân đồi
   const a0 = Math.atan2(end.z - CZ, end.x - CX);
   const N = 48, route = [];
   for (let i = 0; i <= N; i++) {
     const t = i / N;
     const ang = a0 + t * TURN;
-    const rBase = R0 - (R0 - R1) * Math.pow(t, 0.85);
+    const rBase = R0 - (R0 - R1) * Math.pow(t, 0.3);
     // uốn lượn: 3 nhịp, biên độ tắt ở 2 đầu để nối khít
     const env = Math.sin(Math.min(t * 1.04, 1) * Math.PI);
     const wob = Math.sin(t * Math.PI * 6 + 0.7) * 2.5 * env;
@@ -207,12 +212,15 @@ function buildTrailPoints() {
     if (i === 0) { x = end.x; z = end.z; }
     route.push({ x, z });
   }
-  // 2. cao độ: tuyến tính mượt từ mặt đường vòng lên đỉnh (độ dốc ~22%,
-  // có bậc đá ở đoạn dốc) — địa hình sẽ được san theo profile này
+  // 2. cao độ: GIỮ THẤP (bám mặt đường vòng) trong ~28% đầu khi lối mòn còn đi
+  // sát đường, rồi mới leo lên đỉnh — tránh lối mòn lơ lửng trên ledge đường
+  // ở đoạn bench phải nhường cho đường. Độ dốc dồn vào 72% cuối (~19%, có bậc
+  // đá ở đoạn dốc như cũ).
   const y0 = ledgeHeightAt(TRAILHEAD_T) + 0.3, y1 = CONFIG.cliff.padHeight;
   return route.map((p, i) => {
     const t = i / N;
-    const e = t * t * (3 - 2 * t) * 0.25 + t * 0.75; // easing nhẹ ở 2 đầu
+    const tc = Math.min(Math.max((t - 0.28) / 0.72, 0), 1);
+    const e = tc * tc * (3 - 2 * tc);
     return V(p.x, y0 + (y1 - y0) * e, p.z);
   });
 }

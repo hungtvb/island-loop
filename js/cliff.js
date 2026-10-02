@@ -26,10 +26,21 @@ export function terrainHeight(x, z) {
   // không bao giờ lơ lửng/chôn/dốc đứng dù địa hình đá lởm chởm.
   // Bench đủ mạnh khắp nơi: profile lối mòn đã được tính để bám sát địa hình
   // nên trên đỉnh phẳng bench gần như không phải làm gì (không khắc rãnh).
+  // QUAN TRỌNG: không để băng ghế đè lên ledge đường vòng — chỗ nào đường đã
+  // khắc phẳng thì giữ nguyên ledge (đường ưu tiên), lối mòn chỉ khắc ở ngoài
+  // hành lang đường. Trước đây bench đè lên làm địa hình đội lên mặt đường,
+  // xe chui qua đất ở khu hải đăng.
   const tp = trailParam(x, z);
   if (tp) {
     const k = trailBenchFactor(tp.dist);
-    if (k > 0) h = h * (1 - k) + trailYAt(tp.t) * k;
+    if (k > 0) {
+      let kk = k;
+      if (rp && dh > 7) {
+        const roadK = ledgeFactor(rp.dist, ledgeHalfAt(rp.th));
+        if (roadK > 0) kk = k * (1 - roadK);
+      }
+      if (kk > 0) h = h * (1 - kk) + trailYAt(tp.t) * kk;
+    }
   }
   // Đệm phẳng dưới công trình đỉnh đồi (nhà + hải đăng): xóa gợn undulation
   // để mảng sân vàng của model nhà chìm hẳn dưới đất, công trình không cập kênh.
