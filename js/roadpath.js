@@ -39,13 +39,11 @@ const LOOP_XZ = [
   [-108, -50],  // ven biển tây: vòng cung trơn (không cua tay áo)
   [-116, -30],
   [-118, -10],
-  [-112, 6],
-  [-100, 10],
-  [-88, 4],
-  [-78, -8],
-  [-68, -14],   // vào làng chài (nắn mềm)
-  [-52, -8],    // rìa đông-nam làng
-  [-48, 10],
+  [-114, 2],    // vòng cung ôm cua tây-bắc (trải đều, không gấp)
+  [-106, 8],
+  [-96, 10],
+  [-76, 10],
+  [-65, 12],    // qua làng: đường thẳng mượt
   [-45, 25],    // đông-nam
   [-40, 60],    // nam
   [-32, 82],    // vòng cung qua cụm dừa nam
