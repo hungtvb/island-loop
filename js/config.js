@@ -93,7 +93,7 @@ export const CONFIG = {
       deer: 'models/animals/pack_deer_game.glb',
       boar: 'models/animals/pack_boar_game.glb',
       fox: 'models/animals/pack_fox_game.glb',
-      rabbit: 'models/animals/pack_rabbit_game.glb',
+      rabbit: 'models/animals/rabbit_rigged.glb',
       monkey: 'models/animals/chimpanzee_monkey_3d_model_free_game.glb',
       elk: 'models/animals/realistic_animated_elk_3d_model_game.glb',
     },
