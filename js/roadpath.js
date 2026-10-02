@@ -36,17 +36,24 @@ const LOOP_XZ = [
   [-5, -88],    // ven biển bắc
   [-48, -80],   // tây-bắc
   [-88, -66],   // gần cụm dừa tây-nam P3
-  [-112, -30],  // ven biển tây
-  [-116, 2],    // bãi cát phía tây
-  [-92, -16],   // rìa nam làng chài P2
-  [-70, -20],   // qua làng chài (phía nam cụm nhà)
-  [-50, -14],   // rìa đông-nam làng
+  [-108, -50],  // ven biển tây: vòng cung trơn (không cua tay áo)
+  [-116, -30],
+  [-118, -10],
+  [-112, 6],
+  [-100, 10],
+  [-88, 4],
+  [-78, -8],
+  [-68, -14],   // vào làng chài (nắn mềm)
+  [-52, -8],    // rìa đông-nam làng
+  [-48, 10],
   [-45, 25],    // đông-nam
   [-40, 60],    // nam
-  [-24, 97],    // gần cụm dừa bãi nam P3
-  [-8, 88],     // (đoạn cũ)
-  [22, 80],     // (đoạn cũ)
-  [48, 64],     // (đoạn cũ)
+  [-32, 82],    // vòng cung qua cụm dừa nam
+  [-14, 94],
+  [2, 92],
+  [22, 80],
+  [48, 64],
+  [62, 48],     // nắn mềm chỗ khép vòng (sau [48,64], trước [74,28])
 ];
 
 function buildControlPoints() {

@@ -337,16 +337,16 @@ async function buildDog(scene, rng, tickers, counts, markers, hooks) {
 // Đứng/gặm cỏ nhẹ, thỏ nhảy chập chững, nai ăn cỏ (animation thật).
 async function buildForestAnimals(scene, rng, mixers, tickers, counts, markers, hooks) {
   const spots = [
-    // [model, label, targetLen, x, z, rotY] — vị trí cách đường ~11m
-    ['deer', 'Hươu', 1.6, 18.3, -91.6, 0.8],
-    ['deer', 'Hươu', 1.6, 24, -96, -2.1],
-    ['monkey', 'Khỉ', 0.7, 14, -88, 1.5],
-    ['boar', 'Lợn rừng', 1.1, -108.2, -60.3, 1.9],
-    ['boar', 'Lợn rừng', 1.1, -104, -64, -0.7],
-    ['monkey', 'Khỉ', 0.7, -112, -56, -1.2],
-    ['fox', 'Cáo', 0.8, 3.7, 96.2, 2.6],
-    ['rabbit', 'Thỏ', 0.45, 8, 100, 1.2],
-    ['elk', 'Nai sừng tấm', 1.8, 0, 92, -0.8],
+    // [model, label, targetLen, x, z, rotY] — vị trí cách đường ~11m (đo bằng code)
+    ['deer', 'Hươu', 1.6, 33.5, -85, 0.8],
+    ['deer', 'Hươu', 1.6, 16.5, -92.5, -2.1],
+    ['monkey', 'Khỉ', 0.7, 25, -88, 1.5],
+    ['boar', 'Lợn rừng', 1.1, -120.8, -51.4, 1.9],
+    ['boar', 'Lợn rừng', 1.1, -108.5, -67.5, -0.7],
+    ['monkey', 'Khỉ', 0.7, -115, -60, -1.2],
+    ['fox', 'Cáo', 0.8, -9, 106, 2.6],
+    ['rabbit', 'Thỏ', 0.45, 11.5, 100.5, 1.2],
+    ['elk', 'Nai sừng tấm', 1.8, 2, 103, -0.8],
   ];
   let n = 0;
   for (const [key, label, len, x, z, ry] of spots) {
