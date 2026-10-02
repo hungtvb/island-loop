@@ -332,48 +332,64 @@ async function buildDog(scene, rng, tickers, counts, markers, hooks) {
 }
 
 // ---------------------------------------------------------------------------
-// THÚ RỪNG — hươu, lợn rừng, cáo, thỏ trong 3 cụm rừng dừa P3 (tách từ pack 100)
-// Đứng/gặm cỏ nhẹ, thỏ nhảy chập chững. Tránh đường vòng ≥8m.
-async function buildForestAnimals(scene, rng, tickers, counts, markers, hooks) {
+// THÚ RỪNG — hươu, lợn rừng, cáo, thỏ (tách từ pack 100), khỉ, nai sừng tấm.
+// Đặt SÁT ĐƯỜNG (cách tim ~11m) để xe chạy qua nhìn thấy — theo yêu cầu user.
+// Đứng/gặm cỏ nhẹ, thỏ nhảy chập chững, nai ăn cỏ (animation thật).
+async function buildForestAnimals(scene, rng, mixers, tickers, counts, markers, hooks) {
   const spots = [
-    // [model, label, targetLen, x, z, rotY]
-    ['deer', 'Hươu', 1.6, 30, -94, 0.8],
-    ['deer', 'Hươu', 1.6, 22, -102, -2.1],
-    ['boar', 'Lợn rừng', 1.1, -114, -58, 1.9],
-    ['boar', 'Lợn rừng', 1.1, -122, -66, -0.7],
-    ['fox', 'Cáo', 0.8, 6, 102, 2.6],
-    ['rabbit', 'Thỏ', 0.45, 28, -90, 1.2],
-    ['rabbit', 'Thỏ', 0.45, -2, 110, -1.4],
+    // [model, label, targetLen, x, z, rotY] — vị trí cách đường ~11m
+    ['deer', 'Hươu', 1.6, 18.3, -91.6, 0.8],
+    ['deer', 'Hươu', 1.6, 24, -96, -2.1],
+    ['monkey', 'Khỉ', 0.7, 14, -88, 1.5],
+    ['boar', 'Lợn rừng', 1.1, -108.2, -60.3, 1.9],
+    ['boar', 'Lợn rừng', 1.1, -104, -64, -0.7],
+    ['monkey', 'Khỉ', 0.7, -112, -56, -1.2],
+    ['fox', 'Cáo', 0.8, 3.7, 96.2, 2.6],
+    ['rabbit', 'Thỏ', 0.45, 8, 100, 1.2],
+    ['elk', 'Nai sừng tấm', 1.8, 0, 92, -0.8],
   ];
   let n = 0;
   for (const [key, label, len, x, z, ry] of spots) {
     const gltf = await loadSafe(AM[key], label, hooks);
     if (!gltf) continue;
-    // Model tách từ pack nằm nghiêng (trục Z-up) — xoay +90° quanh Z cho đứng
-    // lên TRƯỚC khi fitToSize chuẩn hoá bbox.
-    gltf.scene.rotation.z = Math.PI / 2;
-    gltf.scene.updateMatrixWorld(true);
+    const isPack = ['deer', 'boar', 'fox', 'rabbit'].includes(key);
+    if (isPack) {
+      // Model tách từ pack nằm nghiêng (trục Z-up) — xoay +90° quanh Z cho đứng
+      // lên TRƯỚC khi fitToSize chuẩn hoá bbox.
+      gltf.scene.rotation.z = Math.PI / 2;
+      gltf.scene.updateMatrixWorld(true);
+    }
     const g = fitToSize(gltf.scene, len);
     const gy = meshHeight(x, z);
     g.position.set(x, gy, z);
     g.rotation.y = ry;
     scene.add(g);
     markers.push({ label: key + n, obj: g });
+    // Nai: chạy animation gặm cỏ thật
+    if (key === 'elk' && gltf.animations.length) {
+      const clip = gltf.animations.find((a) => /eating/i.test(a.name)) || gltf.animations[0];
+      if (clip) {
+        const mixer = new THREE.AnimationMixer(g);
+        mixer.clipAction(clip).play();
+        mixers.push(mixer);
+      }
+    }
     const t0 = performance.now() + n * 1300;
     const isRabbit = key === 'rabbit';
-    tickers.push(() => {
-      const t = (performance.now() - t0) / 1000;
-      if (isRabbit) {
-        // thỏ: nhảy chập chững từng quãng
-        const hop = Math.max(0, Math.sin(t * 2.4));
-        g.position.y = gy + hop * hop * 0.12;
-        g.rotation.x = -hop * 0.25;
-      } else {
-        // thú lớn: thở nhẹ + lúc lắc đầu gặm cỏ
-        g.position.y = gy + 0.01 * Math.sin(t * 1.1 + n);
-        g.rotation.x = Math.pow(Math.max(0, Math.sin(t * 0.5 + n * 2)), 4) * 0.28;
-      }
-    });
+    const isElk = key === 'elk';
+    if (!isElk) { // nai đã có animation thật thì không cần ticker giả
+      tickers.push(() => {
+        const t = (performance.now() - t0) / 1000;
+        if (isRabbit) {
+          const hop = Math.max(0, Math.sin(t * 2.4));
+          g.position.y = gy + hop * hop * 0.12;
+          g.rotation.x = -hop * 0.25;
+        } else {
+          g.position.y = gy + 0.01 * Math.sin(t * 1.1 + n);
+          g.rotation.x = Math.pow(Math.max(0, Math.sin(t * 0.5 + n * 2)), 4) * 0.28;
+        }
+      });
+    }
     n++;
   }
   counts.forest = n;
@@ -510,7 +526,7 @@ export async function buildAnimals(scene, onProgress) {
     ['Gà & mèo', () => buildChickenCat(scene, rng, tickers, counts, markers, hooks)],
     ['Chó', () => buildDog(scene, rng, tickers, counts, markers, hooks)],
     ['Hải âu', () => buildSeagulls(scene, rng, mixers, tickers, counts, markers, hooks)],
-    ['Thú rừng', () => buildForestAnimals(scene, rng, tickers, counts, markers, hooks)],
+    ['Thú rừng', () => buildForestAnimals(scene, rng, mixers, tickers, counts, markers, hooks)],
   ];
   if (onProgress) onProgress(0, total, 'Đang nạp động vật…');
   for (const [label, g] of groups) {
