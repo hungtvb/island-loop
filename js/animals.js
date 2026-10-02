@@ -375,8 +375,8 @@ async function buildForestAnimals(scene, rng, mixers, tickers, counts, markers, 
     scene.add(g);
     markers.push({ label: key + n, obj: g });
     // Animation thật cho các model có clip (heo 11 clip, cáo 1, thỏ 1, nai ăn cỏ)
-    const animKey = key === 'boar' ? /walk/i : key === 'elk' ? /eating/i : null;
-    if (gltf.animations.length && (animKey || ['fox', 'rabbit', 'elk'].includes(key))) {
+    const animKey = key === 'boar' ? /walk/i : null;
+    if (gltf.animations.length && (animKey || ['fox', 'rabbit', 'boar'].includes(key))) {
       const clip = animKey
         ? (gltf.animations.find((a) => animKey.test(a.name)) || gltf.animations[0])
         : gltf.animations[0];
@@ -389,7 +389,7 @@ async function buildForestAnimals(scene, rng, mixers, tickers, counts, markers, 
     const t0 = performance.now() + n * 1300;
     const isRabbit = key === 'rabbit';
     const isElk = key === 'elk';
-    const hasRealAnim = ['boar', 'fox', 'rabbit', 'elk'].includes(key) && gltf.animations.length;
+    const hasRealAnim = ['boar', 'fox', 'rabbit'].includes(key) && gltf.animations.length;
     if (!hasRealAnim) { // có animation thật thì không cần ticker giả
       tickers.push(() => {
         const t = (performance.now() - t0) / 1000;
