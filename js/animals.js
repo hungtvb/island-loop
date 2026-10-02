@@ -346,7 +346,7 @@ async function buildForestAnimals(scene, rng, mixers, tickers, counts, markers, 
     ['fox', 'Cáo', 1.1, 11.9, -71.9, 2.6],
     ['rabbit', 'Thỏ', 0.65, -15.7, -77.9, 1.2],
     ['boar', 'Lợn rừng', 1.5, -43.7, -71.2, -0.7],
-    ['elk', 'Nai sừng tấm', 2.5, -72.3, -63.3, -0.8],
+    ['elk', 'Nai sừng tấm', 2.5, -65, -55, -0.8],
     ['monkey', 'Khỉ', 1.0, -97.4, -47.6, -1.2],
     ['deer', 'Hươu', 2.2, -107.7, -20.2, 0.5],
     ['boar', 'Lợn rừng', 1.5, -88, 0, 2.2],
@@ -369,7 +369,7 @@ async function buildForestAnimals(scene, rng, mixers, tickers, counts, markers, 
     const g = fitToSize(gltf.scene, len);
     const gy = meshHeight(x, z);
     // Heo/cáo: bbox bind-pose sai (đáy không ở chân) → hạ thủ công cho chạm đất
-    const yFix = key === 'boar' ? -0.18 : key === 'fox' ? -0.48 : key === 'elk' ? -0.25 : 0;
+    const yFix = key === 'boar' ? -0.18 : key === 'fox' ? -0.48 : 0;
     g.position.set(x, gy + yFix, z);
     g.rotation.y = ry;
     scene.add(g);
