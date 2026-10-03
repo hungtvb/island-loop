@@ -6,7 +6,6 @@ import { meshHeight } from './cliff.js';
 
 export function buildWaterfall(scene) {
   return new Promise((resolve) => {
-    if (window.__DBG__) window.__DBG__('waterfall', 'đang tải...');
     const loader = new GLTFLoader();
     loader.load('models/blender/waterfall.glb', (gltf) => {
       const model = gltf.scene;
@@ -24,12 +23,10 @@ export function buildWaterfall(scene) {
       });
       scene.add(model);
       console.log('[waterfall] Blender GLB đã gắn');
-      if (window.__DBG__) window.__DBG__('waterfall', '✅ OK');
       window.__WATERFALL__ = { model };
       resolve(model);
     }, undefined, (err) => {
       console.error('[waterfall] Lỗi load:', err);
-      if (window.__DBG__) window.__DBG__('waterfall', '❌ LỖI: ' + (err.message || err));
       resolve(null);
     });
   });
