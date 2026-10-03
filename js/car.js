@@ -202,13 +202,14 @@ async function buildOneCar(scene, cfg) {
 
   // Đèn pha / đèn hậu — bóng đèn emissive giả + 1 SpotLight thật chiếu đường.
   // CHỈ sáng ban đêm (setNight). Gắn vào group (đơn vị ≈ mét, đầu xe = +Z).
+  // FIX: chia cho s vì group đã scale s — nếu không đèn sẽ phình to theo xe.
   const front = cfg.targetLen / 2 - 0.15, rear = -cfg.targetLen / 2 + 0.15;
   const headMats = [], tailMats = [];
   const mkLamp = (x, y, z, r, dayHex, bucket) => {
     const mt = new THREE.MeshBasicMaterial({ color: dayHex, fog: false });
-    const mm = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), mt);
-    mm.position.set(x, y, z);
-    mm.visible = false; // TẮT: nghi là nguyên nhân 4 đĩa trên trời iPhone
+    const mm = new THREE.Mesh(new THREE.SphereGeometry(r / s, 10, 8), mt);
+    mm.position.set(x / s, y / s, z / s);
+    mm.visible = true;
     group.add(mm);
     bucket.push(mt);
   };
