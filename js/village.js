@@ -388,7 +388,7 @@ async function buildBoats(scene) {
   ];
   for (const [x, z, rot, tilt] of spots) {
     const b = mkBoat();
-    b.scale.setScalar(0.13);   // thuyền ~7m
+    b.scale.setScalar(0.048);   // thuyền ~7m
     const y = meshHeight(x, z);
     b.position.set(x, y + 0.12, z);
     b.rotation.y = rot;
