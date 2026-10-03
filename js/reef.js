@@ -34,9 +34,9 @@ export function buildReef(scene) {
           const coral = template.clone();
           const ox = (Math.random() - 0.5) * 8;
           const oz = (Math.random() - 0.5) * 8;
-          const s = 1.2 + Math.random() * 0.8;
+          const s = 1.8 + Math.random() * 0.8;  // tăng scale để chắc chắn nhô khỏi nước
           coral.scale.setScalar(s);
-          coral.position.set(px + ox, seabed - 0.2, pz + oz);
+          coral.position.set(px + ox, seabed + 0.3, pz + oz);  // nâng lên 0.5m
           coral.rotation.y = Math.random() * Math.PI * 2;
           coral.traverse((obj) => { if (obj.isMesh) obj.castShadow = true; });
           group.add(coral);
