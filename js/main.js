@@ -12,6 +12,7 @@ import { buildRoad, buildTrail } from './roads.js';
 import { buildLighthouse, buildKeeperHouse } from './lighthouse.js';
 import { plantJabami, plantPalms, plantGrass, plantCliffGreens, plantRoadCorridor, setTrailSamples as setVegTrailSamples } from './vegetation.js';
 import { buildVillage } from './village.js';
+import { buildPier } from './pier.js';
 import { buildPalmForest } from './palmforest.js';
 import { buildAnimals } from './animals.js';
 import { buildCar } from './car.js';
@@ -73,6 +74,7 @@ let paused = false;
 let simTime = 0;
 let lighthouseTick = null;
 let villageTick = null;
+let pierTick = null;
 let palmTick = null;
 let animalTick = null;
 let carApi = null;
@@ -234,6 +236,7 @@ function finishBoot(forced) {
     );
   };
   bgLoad('Làng chài P2', () => buildVillage(scene), (v) => { villageTick = v; counts.houses = v.houseCount; });
+  bgLoad('Cầu tàu P4', () => buildPier(scene), (p) => { pierTick = p; });
   bgLoad('Rừng dừa P3', () => buildPalmForest(scene), (p) => { palmTick = p; counts.palmForest = p.counts; });
   bgLoad('Động vật', () => buildAnimals(scene, (done, total, note) => {
     // Chỉ báo tiến trình nạp nền — loader chính đã gỡ sau ready().
@@ -299,6 +302,7 @@ function animate() {
     // Đẩy nightFactor tới các module: hải đăng, làng, xe, đèn đường
     if (lighthouseTick && lighthouseTick.setNight) lighthouseTick.setNight(nf);
     if (villageTick && villageTick.setNight) villageTick.setNight(nf);
+    if (pierTick && pierTick.userData.setNight) pierTick.userData.setNight(nf);
     if (carApi && carApi.setNight) carApi.setNight(nf);
     if (street) street.setNight(nf);
     if (lighthouseTick) lighthouseTick.update(dt);
