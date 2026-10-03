@@ -12,7 +12,7 @@ export function buildPaddy(scene) {
       const terraces = gltf.scene;
       const [cx, cz] = PADDY_CENTER;
       const gy = meshHeight(cx, cz);
-      terraces.position.set(cx, gy, cz);
+      terraces.position.set(cx, gy + 0.5, cz);  // nâng 0.5m để không bị chôn
       terraces.rotation.y = 0.2;
       terraces.traverse((obj) => {
         if (obj.isMesh) { obj.receiveShadow = true; obj.castShadow = true; }
