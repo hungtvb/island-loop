@@ -208,6 +208,7 @@ async function buildOneCar(scene, cfg) {
     const mt = new THREE.MeshBasicMaterial({ color: dayHex, fog: false });
     const mm = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), mt);
     mm.position.set(x, y, z);
+    mm.visible = false; // TẮT: nghi là nguyên nhân 4 đĩa trên trời iPhone
     group.add(mm);
     bucket.push(mt);
   };
