@@ -5,8 +5,9 @@ export class UI {
     this.barEl = document.getElementById('load-bar-fill');
     this.labelEl = document.getElementById('load-label');
     this.pctEl = document.getElementById('load-pct');
+    this.btnMenu = document.getElementById('btn-menu');
+    this.menuPanel = document.getElementById('menu-panel');
     this.btnPause = document.getElementById('btn-pause');
-    this.btnView = document.getElementById('btn-view');
     this.btnOrbit = document.getElementById('btn-orbit');
     this.btnCam1 = document.getElementById('btn-cam1');
     this.btnCam2 = document.getElementById('btn-cam2');
@@ -22,10 +23,15 @@ export class UI {
     this.metricsEl = document.getElementById('metrics');
     this.paused = false;
     this.orbitOn = true;
-    this.viewMode = 'overview';
     this.camMode = 'free';
     this.timeH = 9;
     this.weatherMode = 'sunny';
+    // Menu toggle
+    if (this.btnMenu && this.menuPanel) {
+      this.btnMenu.addEventListener('click', () => {
+        this.menuPanel.classList.toggle('open');
+      });
+    }
   }
 
   progress(name, frac) {
@@ -80,14 +86,6 @@ export class UI {
       this.paused = !this.paused;
       this.btnPause.innerHTML = this.paused ? '▶ Tiếp tục' : '⏸ Tạm dừng';
       cb(this.paused);
-    });
-  }
-
-  onView(cb) {
-    this.btnView.addEventListener('click', () => {
-      this.viewMode = this.viewMode === 'overview' ? 'lighthouse' : 'overview';
-      this.btnView.innerHTML = this.viewMode === 'overview' ? '👁 Hải đăng' : '👁 Toàn cảnh';
-      cb(this.viewMode);
     });
   }
 

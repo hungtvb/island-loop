@@ -100,15 +100,8 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === '0') setCamMode('free');
 });
 
-// Bay mượt tới góc nhìn preset
+// Bay mượt tới góc nhìn preset (giữ viewTarget cho tương lai, hiện tắt nút view)
 let viewTarget = null;
-ui.onView((v) => {
-  if (camMode !== 'free') setCamMode('free'); // preset góc nhìn = về orbit
-  viewTarget = {
-    pos: new THREE.Vector3(...CONFIG.camera[v].pos),
-    tgt: new THREE.Vector3(...CONFIG.camera[v].tgt),
-  };
-});
 
 // Phát hiện treo main thread:
 //  - stepCpuSumMs:  TỔNG CPU thuần của mọi bước tải (parse GLB + dựng instanced + địa hình)

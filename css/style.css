@@ -25,19 +25,34 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #0b2038;
   pointer-events: none; }
 #topbar small { display: block; font-weight: 400; font-size: 11px; opacity: 0.8; letter-spacing: 0.5px; }
 
-/* Cụm nút điều khiển */
-#controls { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 20;
-  display: flex; gap: 8px; max-width: 96vw; overflow-x: auto; scrollbar-width: none;
-  padding: 2px; }
-#controls::-webkit-scrollbar { display: none; }
-#controls button { border: 1px solid rgba(255,255,255,0.22); cursor: pointer;
-  background: rgba(10, 30, 55, 0.6); backdrop-filter: blur(8px); color: #fff;
-  font-size: 14px; padding: 10px 16px; border-radius: 99px; white-space: nowrap; }
-#controls button:active { transform: scale(0.96); }
+/* Nút menu nổi */
+#btn-menu { position: fixed; bottom: 18px; right: 18px; z-index: 30;
+  width: 52px; height: 52px; border-radius: 50%; font-size: 22px;
+  border: 1px solid rgba(255,255,255,0.25); cursor: pointer;
+  background: rgba(10, 30, 55, 0.75); backdrop-filter: blur(8px); color: #fff; }
+#btn-menu:active { transform: scale(0.94); }
+
+/* Panel menu */
+#menu-panel { position: fixed; bottom: 82px; right: 18px; z-index: 30;
+  width: min(320px, 86vw); max-height: 70vh; overflow-y: auto;
+  background: rgba(10, 25, 45, 0.92); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 16px;
+  padding: 12px; display: none; }
+#menu-panel.open { display: block; }
+.menu-section { margin-bottom: 12px; }
+.menu-section:last-child { margin-bottom: 0; }
+.menu-title { color: #9fb8d0; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.5px; margin-bottom: 6px; }
+.menu-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.menu-row button { border: 1px solid rgba(255,255,255,0.22); cursor: pointer;
+  background: rgba(255,255,255,0.08); color: #fff;
+  font-size: 13px; padding: 8px 12px; border-radius: 10px; white-space: nowrap; }
+.menu-row button:active { transform: scale(0.96); }
 
 #metrics { display: none; }
 
 @media (max-width: 600px) {
   #topbar { font-size: 12px; padding: 6px 10px; }
-  #controls button { font-size: 12px; padding: 8px 12px; }
+  #btn-menu { width: 48px; height: 48px; font-size: 20px; bottom: 16px; right: 16px; }
+  #menu-panel { bottom: 74px; right: 16px; }
 }

@@ -25,14 +25,47 @@
 
 <div id="topbar">ISLAND LOOP · P1<small>Mũi Hải Đăng — đường xoắn ốc</small></div>
 
-<div id="controls">
-  <button id="btn-pause">⏸ Tạm dừng</button>
-  <button id="btn-view">👁 Hải đăng</button>
-  <button id="btn-orbit">🔁 Tự xoay: bật</button>
-  <button id="btn-cam1">🚗 Cam xa</button>
-  <button id="btn-cam2">🚗 Cam đuôi</button>
-  <button id="btn-free">🔭 Tự do</button>
-  <button id="btn-car">🔄 Xe: …</button>
+<button id="btn-menu" aria-label="Menu">☰</button>
+
+<div id="menu-panel">
+  <div class="menu-section">
+    <div class="menu-title">📷 Camera</div>
+    <div class="menu-row">
+      <button id="btn-cam1">🚗 Cam xa</button>
+      <button id="btn-cam2">🚗 Cam đuôi</button>
+      <button id="btn-free">🔭 Tự do</button>
+    </div>
+  </div>
+  <div class="menu-section">
+    <div class="menu-title">🚗 Xe</div>
+    <div class="menu-row">
+      <button id="btn-car">🔄 Xe: …</button>
+    </div>
+  </div>
+  <div class="menu-section">
+    <div class="menu-title">🕐 Thời gian</div>
+    <div class="menu-row">
+      <button id="btn-tmorn">☀️ Sáng</button>
+      <button id="btn-taft">🌤️ Chiều</button>
+      <button id="btn-tsun">🌅 Hoàng hôn</button>
+      <button id="btn-tnight">🌙 Đêm</button>
+    </div>
+  </div>
+  <div class="menu-section">
+    <div class="menu-title">🌦️ Thời tiết</div>
+    <div class="menu-row">
+      <button id="btn-wsun">☀️ Nắng</button>
+      <button id="btn-wcloud">☁️ Mây</button>
+      <button id="btn-wrain">🌧️ Mưa</button>
+    </div>
+  </div>
+  <div class="menu-section">
+    <div class="menu-title">⚙️ Khác</div>
+    <div class="menu-row">
+      <button id="btn-pause">⏸ Tạm dừng</button>
+      <button id="btn-orbit">🔁 Tự xoay: bật</button>
+    </div>
+  </div>
 </div>
 
 <div id="metrics"></div>
