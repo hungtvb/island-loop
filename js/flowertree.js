@@ -2,7 +2,9 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { meshHeight } from './cliff.js';
-import { FLOWERTREE_B64 } from './flowertree_b64.js';
+import { FLOWERTREE_P1 } from './flowertree_b64_p1.js';
+import { FLOWERTREE_P2 } from './flowertree_b64_p2.js';
+const FLOWERTREE_B64 = FLOWERTREE_P1 + FLOWERTREE_P2;
 
 function b64ToArrayBuffer(b64) {
   const bin = atob(b64);
