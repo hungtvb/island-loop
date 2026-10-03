@@ -9,15 +9,17 @@ export function buildWaterfall(scene) {
     const loader = new GLTFLoader();
     loader.load('models/blender/waterfall.glb', (gltf) => {
       const model = gltf.scene;
-      const fx = 99, fz = -5;  // dịch ra đông 3m để không bị chôn trong vách đá
-      const topY = meshHeight(93, -5) - 1.5;
+      // Vách đá dốc từ x=96 (30m) xuống x=114 (5m). Đặt thác ở x=108 (địa hình 11m)
+      // để không bị chôn dưới đất
+      const fx = 108, fz = -5;
+      const topY = 29.0;  // đỉnh vách đá
       const baseY = 0.3;
       const modelH = 20;
-      const needH = Math.max(topY - baseY, 8);
+      const needH = topY - baseY;
       const s = needH / modelH;
       model.scale.setScalar(s);
       model.position.set(fx, baseY, fz);
-      model.rotation.y = Math.PI / 2;
+      model.rotation.y = Math.PI / 2;  // mặt trước hướng đông
       model.traverse((obj) => {
         if (obj.isMesh) { obj.castShadow = true; obj.receiveShadow = true; }
       });
