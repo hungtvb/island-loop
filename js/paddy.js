@@ -1,126 +1,85 @@
-// paddy.js — Ruộng lúa bậc thang kiểu anime/Ghibli gần làng chài.
-// Dựng procedural: bờ đất + mặt nước + lúa (instanced, đung đưa trong gió).
+// paddy.js — Ruộng bậc thang Blender GLB (bờ + nước) + lúa InstancedMesh
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { meshHeight } from './cliff.js';
+import { PADDY_B64 } from './paddy_b64.js';
 
-// Vị trí: đông-nam làng chài, đất tương đối bằng, tránh đường và nhà
-// Làng ở (-72, 6), đường vòng phía bắc (z=20+), nên đặt ruộng ở phía nam
+function b64ToArrayBuffer(b64) {
+  const bin = atob(b64);
+  const len = bin.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
 const PADDY_CENTER = [-52, -18];
-const TERRACES = 4;           // 4 tầng
-const TERRACE_W = 14;         // rộng 14m mỗi tầng
-const TERRACE_D = 10;         // sâu 10m mỗi tầng
-const STEP_H = 0.9;           // mỗi tầng thấp hơn 0.9m
-const GAP = 2.5;              // khoảng cách giữa các tầng
 
 export function buildPaddy(scene) {
-  const group = new THREE.Group();
-  const baseH = meshHeight(PADDY_CENTER[0], PADDY_CENTER[1]);
+  return new Promise((resolve) => {
+    const loader = new GLTFLoader();
+    const buffer = b64ToArrayBuffer(PADDY_B64);
 
-  const earthMat = new THREE.MeshStandardMaterial({
-    color: 0x7a5c3d, roughness: 0.95, metalness: 0.0, // đất nâu
-  });
-  const waterMat = new THREE.MeshStandardMaterial({
-    color: 0x7ec8d8, roughness: 0.15, metalness: 0.3, // nước phản chiếu
-    transparent: true, opacity: 0.85,
-  });
-  const riceMat = new THREE.MeshStandardMaterial({
-    color: 0x5da24a, roughness: 0.8, metalness: 0.0, // lúa xanh
-    side: THREE.DoubleSide,
-  });
+    loader.parse(buffer, '', (gltf) => {
+      const terraces = gltf.scene;
 
-  const riceInstances = [];
-  const dummy = new THREE.Object3D();
+      // Đặt ruộng ở vị trí cũ, bám địa hình
+      const [cx, cz] = PADDY_CENTER;
+      const gy = meshHeight(cx, cz);
+      terraces.position.set(cx, gy, cz);
+      terraces.rotation.y = 0.2;
+      terraces.traverse((obj) => {
+        if (obj.isMesh) {
+          obj.receiveShadow = true;
+          obj.castShadow = true;
+        }
+      });
+      scene.add(terraces);
 
-  for (let t = 0; t < TERRACES; t++) {
-    // Mỗi tầng lùi dần về phía nam và thấp dần
-    const cx = PADDY_CENTER[0] + t * 3;  // hơi lệch đông mỗi tầng
-    const cz = PADDY_CENTER[1] - t * (TERRACE_D + GAP);
-    const cy = baseH - t * STEP_H;
-    // Bám địa hình: lấy cao độ thực tế
-    const groundY = meshHeight(cx, cz);
-    const y = Math.min(cy, groundY + 0.3);
+      // Lúa: InstancedMesh
+      const riceGeo = new THREE.ConeGeometry(0.09, 0.65, 5);
+      const riceMat = new THREE.MeshStandardMaterial({
+        color: 0x5da24a, roughness: 0.8,
+      });
+      const ROWS = 8, COLS = 12;
+      const riceIM = new THREE.InstancedMesh(riceGeo, riceMat, ROWS * COLS * 4);
+      const dummy = new THREE.Object3D();
+      let idx = 0;
 
-    // --- Bờ đất: khung viền quanh ruộng ---
-    const wallH = 0.7, wallT = 0.6;
-    // 4 bờ
-    const walls = [
-      [TERRACE_W + wallT * 2, wallH, wallT, 0, -TERRACE_D / 2],           // bắc
-      [TERRACE_W + wallT * 2, wallH, wallT, 0, TERRACE_D / 2],            // nam
-      [wallT, wallH, TERRACE_D, -TERRACE_W / 2, 0],                       // tây
-      [wallT, wallH, TERRACE_D, TERRACE_W / 2, 0],                        // đông
-    ];
-    for (const [w, h, d, ox, oz] of walls) {
-      const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), earthMat);
-      wall.position.set(cx + ox, y - h / 2 + 0.1, cz + oz);
-      wall.castShadow = true;
-      wall.receiveShadow = true;
-      group.add(wall);
-    }
-
-    // --- Đáy ruộng (đất) ---
-    const bed = new THREE.Mesh(
-      new THREE.BoxGeometry(TERRACE_W, 0.2, TERRACE_D),
-      earthMat
-    );
-    bed.position.set(cx, y - 0.25, cz);
-    bed.receiveShadow = true;
-    group.add(bed);
-
-    // --- Mặt nước ---
-    const water = new THREE.Mesh(
-      new THREE.PlaneGeometry(TERRACE_W - 0.3, TERRACE_D - 0.3),
-      waterMat
-    );
-    water.rotation.x = -Math.PI / 2;
-    water.position.set(cx, y - 0.05, cz);
-    water.receiveShadow = true;
-    group.add(water);
-
-    // --- Lúa: rải đều trong ruộng (instanced sau) ---
-    const rows = 8, cols = 12;
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const lx = cx - TERRACE_W / 2 + 1 + (c / (cols - 1)) * (TERRACE_W - 2);
-        const lz = cz - TERRACE_D / 2 + 1 + (r / (rows - 1)) * (TERRACE_D - 2);
-        // Ngẫu nhiên nhẹ
-        const jx = (Math.random() - 0.5) * 0.5;
-        const jz = (Math.random() - 0.5) * 0.5;
-        riceInstances.push({
-          x: lx + jx, y: y, z: lz + jz,
-          s: 0.7 + Math.random() * 0.5,
-          rot: Math.random() * Math.PI * 2,
-          phase: Math.random() * Math.PI * 2,
-        });
+      for (let t = 0; t < 4; t++) {
+        const ty = -t * 12.5;
+        const tz = -t * 0.9;
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const rx = -6 + c * 1.1 + (Math.random() - 0.5) * 0.3;
+            const ry = ty - 4 + r * 1.1 + (Math.random() - 0.5) * 0.3;
+            dummy.position.set(cx + rx, gy + tz + 0.35, cz + ry);
+            dummy.rotation.set(
+              (Math.random() - 0.5) * 0.15,
+              Math.random() * Math.PI * 2,
+              (Math.random() - 0.5) * 0.15
+            );
+            const s = 0.8 + Math.random() * 0.4;
+            dummy.scale.set(s, s, s);
+            dummy.updateMatrix();
+            riceIM.setMatrixAt(idx++, dummy.matrix);
+          }
+        }
       }
-    }
-  }
+      riceIM.count = idx;
+      riceIM.castShadow = true;
+      scene.add(riceIM);
 
-  // --- Dựng InstancedMesh cho lúa ---
-  // Cây lúa: 3 lá chéo nhau (dạng nón dẹt)
-  const riceGeo = new THREE.ConeGeometry(0.18, 0.7, 5);
-  riceGeo.translate(0, 0.35, 0); // gốc ở đáy
-  const riceIM = new THREE.InstancedMesh(riceGeo, riceMat, riceInstances.length);
-  riceInstances.forEach((rc, i) => {
-    dummy.position.set(rc.x, rc.y, rc.z);
-    dummy.rotation.set(0, rc.rot, 0);
-    dummy.scale.setScalar(rc.s);
-    dummy.updateMatrix();
-    riceIM.setMatrixAt(i, dummy.matrix);
+      const group = new THREE.Group();
+      group.add(terraces);
+      group.add(riceIM);
+      group.userData.tick = () => {}; // lúa tĩnh (tránh lỗi xoay quanh origin)
+
+      console.log('[paddy] Blender GLB đã gắn +', idx, 'cây lúa');
+      window.__PADDY__ = { group, riceCount: idx };
+      resolve(group);
+    }, (err) => {
+      console.error('[paddy] Lỗi load GLB:', err);
+      resolve(null);
+    });
   });
-  riceIM.castShadow = true;
-  riceIM.instanceMatrix.needsUpdate = true;
-  group.add(riceIM);
-
-  // Animation đung đưa: xoay nhẹ theo gió (dùng onBeforeRender hoặc tick)
-  // Đơn giản: lưu để main.js tick
-  group.userData.tick = (dt, simTime) => {
-    // Đung đưa bằng cách xoay group lúa rất nhẹ — rẻ hơn update từng instance
-    riceIM.rotation.z = 0.02 * Math.sin(simTime * 1.2);
-    riceIM.rotation.x = 0.015 * Math.cos(simTime * 0.9);
-  };
-  group.userData.riceIM = riceIM;
-
-  scene.add(group);
-  window.__PADDY__ = { group, terraces: TERRACES, riceCount: riceInstances.length };
-  return group;
 }
