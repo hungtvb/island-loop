@@ -38,6 +38,7 @@ export function createDayNight(opts) {
   const U = sky.material.uniforms;
   const sunDir = new THREE.Vector3();
   const moonDir = new THREE.Vector3();
+  const _lightDir = new THREE.Vector3();
   let time = 9;    // giờ trong ngày (0-24) — mặc định 9h sáng
   let elapsed = 0;
 
@@ -64,7 +65,12 @@ export function createDayNight(opts) {
       _c1.lerp(_c2.setHex(0x9db4dd), nightF);                          // đêm: xanh ánh trăng
       sun.color.copy(_c1);
       sun.intensity = 2.8 * dayF + 0.5 * nightF;
-      sun.position.copy(dayF >= 0.5 ? sunDir : moonDir).multiplyScalar(300);
+      // Hướng đèn: nội suy mượt giữa moonDir (đêm) và sunDir (ngày), tránh nhảy 180° lúc chạng vạng
+      const blend = THREE.MathUtils.smoothstep(dayF, 0.35, 0.65);
+      _lightDir.copy(moonDir).lerp(sunDir, blend);
+      if (_lightDir.lengthSq() > 0.001) {  // tránh vector 0 khi 2 hướng đối nhau
+        sun.position.copy(_lightDir.normalize()).multiplyScalar(300);
+      }
 
       // Sáng môi trường
       hemi.intensity = 0.75 * dayF + 0.30 * nightF;
@@ -89,17 +95,13 @@ export function createDayNight(opts) {
       scene.fog.far = 1200 - 350 * nightF;
       renderer.toneMappingExposure = 1.05 - 0.18 * nightF;
 
-      // Mây nhuộm theo giờ
-      if (clouds && clouds.sprites) {
-        _c1.setHex(0xffffff).lerp(_c2.setHex(0x2a3752), nightF);
-        for (const sp of clouds.sprites) sp.material.color.copy(_c1);
-      }
+      // Mây: màu do weather.js set tuyệt đối (theo ngày/đêm + xám khi Mây/Mưa)
 
       // Biển: tối theo đêm, chân trời khớp màu trời
       if (sea && sea.uniforms) {
         sea.uniforms.uDim.value = 1 - 0.72 * nightF;
         sea.uniforms.uHorizonColor.value.copy(U.uHor.value);
-        sea.uniforms.uSunDir.value.copy(dayF >= 0.5 ? sunDir : moonDir);
+        sea.uniforms.uSunDir.value.copy(sun.position).normalize();
       }
     },
   };

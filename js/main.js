@@ -295,7 +295,7 @@ function animate() {
     // Ngày/đêm trước, thời tiết sau (thời tiết chỉnh trên giá trị gốc trong ngày)
     daynight.update(dt);
     const nf = daynight.nightFactor;
-    weather.update(dt);
+    weather.update(dt, nf);
     // Đẩy nightFactor tới các module: hải đăng, làng, xe, đèn đường
     if (lighthouseTick && lighthouseTick.setNight) lighthouseTick.setNight(nf);
     if (villageTick && villageTick.setNight) villageTick.setNight(nf);

@@ -36,23 +36,27 @@ export function createWeather(opts) {
   scene.add(rain);
 
   const _tint = new THREE.Color();
+  const _base = new THREE.Color();
+  const _night = new THREE.Color();
 
   const api = {
     setWeather(md) { if (MODES[md]) mode = md; },
     getWeather() { return mode; },
-    update(dt) {
+    update(dt, nightF = 0) {
       const M = MODES[mode];
       // Giảm sáng chung
       sun.intensity *= M.dim;
       hemi.intensity *= M.dim;
 
-      // Mây: đậm hơn + xám đi (chỉ khi không phải nắng)
+      // Mây: màu gốc theo ngày/đêm, xám đi khi Mây/Mưa (set tuyệt đối, không lerp tương đối)
       if (clouds && clouds.sprites) {
+        _base.setHex(0xffffff).lerp(_night.setHex(0x2a3752), nightF);
         _tint.setHex(TINT_HEX[mode] || 0xffffff);
+        _base.lerp(_tint, M.tintK);
         const k = Math.min(1, 2 * dt);
         for (const sp of clouds.sprites) {
           sp.material.opacity += (M.cloudOp - sp.material.opacity) * k;
-          if (M.tintK > 0) sp.material.color.lerp(_tint, M.tintK * k);
+          sp.material.color.copy(_base);
         }
       }
 
