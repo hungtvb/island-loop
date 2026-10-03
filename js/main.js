@@ -7,7 +7,7 @@ import { createDayNight } from './daynight.js';
 import { createWeather } from './weather.js';
 import { buildStreetlights } from './streetlights.js';
 import { buildSea } from './water.js';
-import { buildTerrain, scatterRocks, setTrailSamples as setRockTrailSamples } from './cliff.js';
+import { buildTerrain, scatterRocks, setTrailSamples as setRockTrailSamples, meshHeight } from './cliff.js';
 import { buildRoad, buildTrail } from './roads.js';
 import { buildLighthouse, buildKeeperHouse } from './lighthouse.js';
 import { plantJabami, plantPalms, plantGrass, plantCliffGreens, plantRoadCorridor, setTrailSamples as setVegTrailSamples } from './vegetation.js';
@@ -43,13 +43,16 @@ const camera = createCamera();
 const controls = createControls(camera, renderer.domElement);
 fitResize(renderer, camera);
 // Debug: ?cam=x,z để nhảy camera tới tọa độ (QA vị trí thú)
+// Camera bay cao theo địa hình, không chôn trong đồi
 try {
   const m = new URLSearchParams(location.search).get('cam');
   if (m) {
     const [cx, cz] = m.split(',').map(Number);
     if (isFinite(cx) && isFinite(cz)) {
-      camera.position.set(cx + 12, 18, cz + 12);
-      controls.target.set(cx, 2, cz);
+      const camX = cx + 15, camZ = cz + 15;
+      const camY = Math.max(meshHeight(camX, camZ), meshHeight(cx, cz)) + 12;
+      camera.position.set(camX, camY, camZ);
+      controls.target.set(cx, meshHeight(cx, cz) + 2, cz);
       controls.update();
     }
   }
