@@ -37,6 +37,8 @@ uniform vec3 uHor;      // màu chân trời
 uniform vec3 uSunTint;  // màu đĩa mặt trời (ửng đỏ lúc hoàng hôn)
 uniform vec3 uMoonDir;  // hướng mặt trăng
 uniform float uStarAmt; // 0=ngày, 1=đêm
+uniform float uSunAmt;  // 0=đêm, 1=ngày — độ hiện của đĩa mặt trời
+uniform float uMoonAmt; // 0=ngày, 1=đêm — độ hiện của đĩa mặt trăng
 uniform float uTime;
 varying vec3 vDir;
 float hash13(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
@@ -47,13 +49,13 @@ void main() {
   if (h < 0.0) col = mix(uHor, uZen * 0.5, clamp(-h * 3.0, 0.0, 1.0));
   vec3 sd = normalize(uSunDir);
   float s = max(dot(d, sd), 0.0);
-  col += uSunTint * pow(s, 700.0) * 2.5;  // đĩa mặt trời
-  col += uSunTint * pow(s, 8.0) * 0.22;   // quầng sáng
-  // Mặt trăng: đĩa nhạt + quầng mờ
+  col += uSunTint * pow(s, 700.0) * 2.5 * uSunAmt;  // đĩa mặt trời (mờ dần về đêm)
+  col += uSunTint * pow(s, 8.0) * 0.22 * uSunAmt;   // quầng sáng
+  // Mặt trăng: đĩa nhạt + quầng mờ (chỉ hiện ban đêm)
   vec3 md = normalize(uMoonDir);
   float m = max(dot(d, md), 0.0);
-  col += vec3(0.92, 0.95, 1.0) * smoothstep(0.99955, 0.99985, m) * 1.3;
-  col += vec3(0.50, 0.58, 0.75) * pow(m, 300.0) * 0.15;
+  col += vec3(0.92, 0.95, 1.0) * smoothstep(0.99955, 0.99985, m) * 1.3 * uMoonAmt;
+  col += vec3(0.50, 0.58, 0.75) * pow(m, 300.0) * 0.15 * uMoonAmt;
   // Sao: hash trên hướng nhìn, nhấp nháy nhẹ
   if (uStarAmt > 0.003 && h > 0.02) {
     vec3 g = floor(d * 230.0);
@@ -77,6 +79,8 @@ export function buildSky(scene) {
       uSunTint: { value: new THREE.Color(1.0, 0.92, 0.78) },
       uMoonDir: { value: new THREE.Vector3(0, -1, 0) },
       uStarAmt: { value: 0 },
+      uSunAmt: { value: 1 },
+      uMoonAmt: { value: 0 },
       uTime: { value: 0 },
     },
     side: THREE.BackSide,

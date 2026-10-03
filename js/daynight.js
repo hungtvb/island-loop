@@ -77,6 +77,8 @@ export function createDayNight(opts) {
       U.uSunDir.value.copy(sunDir);
       U.uMoonDir.value.copy(moonDir);
       U.uStarAmt.value = nightF;
+      U.uSunAmt.value = dayF;    // mặt trời mờ dần khi đêm xuống
+      U.uMoonAmt.value = nightF; // mặt trăng chỉ hiện ban đêm
       U.uTime.value = elapsed;
       _c1.setHex(0xffffff).lerp(_c2.setHex(0xffb37a), duskF);
       U.uSunTint.value.copy(_c1);
