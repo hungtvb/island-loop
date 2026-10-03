@@ -49,9 +49,8 @@ void main() {
   if (h < 0.0) col = mix(uHor, uZen * 0.5, clamp(-h * 3.0, 0.0, 1.0));
   vec3 sd = normalize(uSunDir);
   float s = max(dot(d, sd), 0.0);
-  // DIAGNOSTIC: mặt trời màu XANH DƯƠNG để xem 2 đĩa đỏ có phải mặt trời không
-  col += vec3(0.0, 0.0, 1.0) * pow(s, 700.0) * 2.5 * uSunAmt;
-  col += vec3(0.0, 0.0, 1.0) * pow(s, 8.0) * 0.22 * uSunAmt;
+  col += uSunTint * pow(s, 700.0) * 2.5 * uSunAmt;  // đĩa mặt trời (mờ dần về đêm)
+  col += uSunTint * pow(s, 8.0) * 0.22 * uSunAmt;   // quầng sáng
   // Mặt trăng: đĩa nhạt + quầng mờ (chỉ hiện ban đêm)
   vec3 md = normalize(uMoonDir);
   float m = max(dot(d, md), 0.0);
