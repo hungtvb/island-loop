@@ -37,6 +37,18 @@ const scene = createScene();
 const camera = createCamera();
 const controls = createControls(camera, renderer.domElement);
 fitResize(renderer, camera);
+// Debug: ?cam=x,z để nhảy camera tới tọa độ (QA vị trí thú)
+try {
+  const m = new URLSearchParams(location.search).get('cam');
+  if (m) {
+    const [cx, cz] = m.split(',').map(Number);
+    if (isFinite(cx) && isFinite(cz)) {
+      camera.position.set(cx + 12, 18, cz + 12);
+      controls.target.set(cx, 2, cz);
+      controls.update();
+    }
+  }
+} catch (e) {}
 
 // Phần dựng đồng bộ, nhẹ (vài chục ms): trời, biển, địa hình, đường
 const { sun, hemi } = buildLights(scene);
