@@ -3,7 +3,17 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { meshHeight } from './cliff.js';
-import { CORAL_B64 } from './coral_b64.js';
+import { CORAL_P1 } from './coral_b64_p1.js';
+import { CORAL_P2 } from './coral_b64_p2.js';
+import { CORAL_P3 } from './coral_b64_p3.js';
+import { CORAL_P4 } from './coral_b64_p4.js';
+import { CORAL_P5 } from './coral_b64_p5.js';
+import { CORAL_P6 } from './coral_b64_p6.js';
+import { CORAL_P7 } from './coral_b64_p7.js';
+import { CORAL_P8 } from './coral_b64_p8.js';
+import { CORAL_P9 } from './coral_b64_p9.js';
+import { CORAL_P10 } from './coral_b64_p10.js';
+const CORAL_B64 = CORAL_P1 + CORAL_P2 + CORAL_P3 + CORAL_P4 + CORAL_P5 + CORAL_P6 + CORAL_P7 + CORAL_P8 + CORAL_P9 + CORAL_P10;
 
 function b64ToArrayBuffer(b64) {
   const bin = atob(b64);
