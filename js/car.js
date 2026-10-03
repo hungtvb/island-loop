@@ -218,8 +218,8 @@ async function buildOneCar(scene, cfg) {
   mkLamp(-0.72, 0.85, rear, 0.07, 0x7a1a1a, tailMats);
   mkLamp(0.72, 0.85, rear, 0.07, 0x7a1a1a, tailMats);
   const spot = new THREE.SpotLight(0xffeecf, 0, 34, 0.55, 0.5, 1.4);
-  spot.position.set(0, 1.1, front - 0.3);
-  spot.target.position.set(0, 0.1, front + 14);
+  spot.position.set(0, 1.1 / s, (front - 0.3) / s);
+  spot.target.position.set(0, 0.1 / s, (front + 14) / s);
   group.add(spot);
   group.add(spot.target);
 

@@ -49,12 +49,13 @@ void main() {
   if (h < 0.0) col = mix(uHor, uZen * 0.5, clamp(-h * 3.0, 0.0, 1.0));
   vec3 sd = normalize(uSunDir);
   float s = max(dot(d, sd), 0.0);
-  // TẮT đĩa mặt trời/mặt trăng: chỉ giữ quầng sáng nhẹ, không vẽ đĩa rõ
-  // (fix lỗi 2 mặt trời/mặt trăng hiện đồng thời)
+  // Đĩa mặt trời: chỉ hiện ban ngày (uSunAmt), 1 đĩa duy nhất
+  col += uSunTint * smoothstep(0.9992, 0.9997, s) * 1.2 * uSunAmt;
   col += uSunTint * pow(s, 8.0) * 0.22 * uSunAmt;   // quầng sáng mặt trời
-  // Mặt trăng: chỉ quầng mờ, không đĩa rõ
+  // Mặt trăng: chỉ hiện ban đêm (uMoonAmt), 1 đĩa duy nhất
   vec3 md = normalize(uMoonDir);
   float m = max(dot(d, md), 0.0);
+  col += vec3(0.92, 0.94, 0.98) * smoothstep(0.9994, 0.9998, m) * 0.9 * uMoonAmt;
   col += vec3(0.50, 0.58, 0.75) * pow(m, 300.0) * 0.15 * uMoonAmt;
   // Sao: hash trên hướng nhìn, nhấp nháy nhẹ
   if (uStarAmt > 0.003 && h > 0.02) {
