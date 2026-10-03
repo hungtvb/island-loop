@@ -3,6 +3,9 @@ import * as THREE from 'three';
 import { CONFIG, FAST, MOBILE } from './config.js';
 import { createRenderer, createScene, createCamera, createControls, fitResize } from './scene.js';
 import { buildLights, buildSky, buildClouds } from './lighting.js';
+import { createDayNight } from './daynight.js';
+import { createWeather } from './weather.js';
+import { buildStreetlights } from './streetlights.js';
 import { buildSea } from './water.js';
 import { buildTerrain, scatterRocks, setTrailSamples as setRockTrailSamples } from './cliff.js';
 import { buildRoad, buildTrail } from './roads.js';
@@ -36,12 +39,19 @@ const controls = createControls(camera, renderer.domElement);
 fitResize(renderer, camera);
 
 // Phần dựng đồng bộ, nhẹ (vài chục ms): trời, biển, địa hình, đường
-buildLights(scene);
-buildSky(scene);
+const { sun, hemi } = buildLights(scene);
+const sky = buildSky(scene);
 const clouds = buildClouds(scene);
 const sea = buildSea(scene);
 buildTerrain(scene);
 const { roadSamples, length: roadLen } = buildRoad(scene);
+// Đèn đường 2 bên đường vòng (instanced, chỉ sáng ban đêm)
+const street = buildStreetlights(scene, roadCurve());
+// Ngày/đêm + thời tiết — khởi tạo sau khi có đủ sun/sky/clouds/sea
+const daynight = createDayNight({ scene, renderer, sun, hemi, sky, clouds, sea });
+const weather = createWeather({ scene, sun, hemi, clouds });
+window.__DAYNIGHT__ = daynight;
+window.__WEATHER__ = weather;
 // Lối mòn đất lên hải đăng (drap theo địa hình, không khắc ledge)
 const { trailSamples, length: trailLen } = buildTrail(scene);
 setVegTrailSamples(trailSamples);
@@ -73,6 +83,17 @@ ui.onCarSwitch(() => {
   const other = carApi.carId === 'jeep' ? 'van' : 'jeep';
   if (carApi.setCar(other)) ui.setCarLabel(carApi.carLabel());
 });
+// Ngày/đêm + thời tiết (máy render phần mềm: vẽ lại 1 frame sau khi đổi)
+ui.onTime((h) => {
+  daynight.setTime(h);
+  if (SOFTWARE_RENDERER) requestAnimationFrame(() => renderer.render(scene, camera));
+});
+ui.onWeather((m) => {
+  weather.setWeather(m);
+  if (SOFTWARE_RENDERER) requestAnimationFrame(() => renderer.render(scene, camera));
+});
+ui.setTimeActive(9);
+ui.setWeatherActive('sunny');
 window.addEventListener('keydown', (e) => {
   if (e.key === '1') setCamMode('far');
   else if (e.key === '2') setCamMode('chase');
@@ -266,6 +287,15 @@ function animate() {
     simTime += dt;
     sea.update(dt, simTime);
     clouds.update(dt);
+    // Ngày/đêm trước, thời tiết sau (thời tiết chỉnh trên giá trị gốc trong ngày)
+    daynight.update(dt);
+    const nf = daynight.nightFactor;
+    weather.update(dt);
+    // Đẩy nightFactor tới các module: hải đăng, làng, xe, đèn đường
+    if (lighthouseTick && lighthouseTick.setNight) lighthouseTick.setNight(nf);
+    if (villageTick && villageTick.setNight) villageTick.setNight(nf);
+    if (carApi && carApi.setNight) carApi.setNight(nf);
+    if (street) street.setNight(nf);
     if (lighthouseTick) lighthouseTick.update(dt);
     if (villageTick) villageTick.update(dt);
     if (palmTick) palmTick.update(dt);

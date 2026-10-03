@@ -26,6 +26,9 @@ const CARS = [
 ];
 
 const LOAD_TIMEOUT_MS = 30000;
+// Màu đèn xe: ngày (mờ) → đêm (sáng)
+const _headDay = new THREE.Color(0xcfd6da), _headNight = new THREE.Color(0xfff3cf);
+const _tailDay = new THREE.Color(0x7a1a1a), _tailNight = new THREE.Color(0xff2a1a);
 const loader = new GLTFLoader();
 function loadSafe(url) {
   return Promise.race([
@@ -196,10 +199,32 @@ async function buildOneCar(scene, cfg) {
   group.add(inner);
   group.scale.setScalar(s);
   group.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; } });
+
+  // Đèn pha / đèn hậu — bóng đèn emissive giả + 1 SpotLight thật chiếu đường.
+  // CHỈ sáng ban đêm (setNight). Gắn vào group (đơn vị ≈ mét, đầu xe = +Z).
+  const front = cfg.targetLen / 2 - 0.15, rear = -cfg.targetLen / 2 + 0.15;
+  const headMats = [], tailMats = [];
+  const mkLamp = (x, y, z, r, dayHex, bucket) => {
+    const mt = new THREE.MeshBasicMaterial({ color: dayHex, fog: false });
+    const mm = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), mt);
+    mm.position.set(x, y, z);
+    group.add(mm);
+    bucket.push(mt);
+  };
+  mkLamp(-0.72, 0.78, front, 0.10, 0xcfd6da, headMats);
+  mkLamp(0.72, 0.78, front, 0.10, 0xcfd6da, headMats);
+  mkLamp(-0.72, 0.85, rear, 0.07, 0x7a1a1a, tailMats);
+  mkLamp(0.72, 0.85, rear, 0.07, 0x7a1a1a, tailMats);
+  const spot = new THREE.SpotLight(0xffeecf, 0, 34, 0.55, 0.5, 1.4);
+  spot.position.set(0, 1.1, front - 0.3);
+  spot.target.position.set(0, 0.1, front + 14);
+  group.add(spot);
+  group.add(spot.target);
+
   group.visible = false;
   scene.add(group);
   const wheelR = wheels.length ? wheels[0].radius * s : 0.35 * s;
-  return { cfg, group, wheels, scale: s, wheelR };
+  return { cfg, group, wheels, scale: s, wheelR, spot, headMats, tailMats };
 }
 
 export async function buildCar(scene, roadCurve, roadLength, onProgress) {
@@ -291,6 +316,14 @@ export async function buildCar(scene, roadCurve, roadLength, onProgress) {
       return true;
     },
     carLabel() { return active().cfg.label; },
+    // Ban đêm: bật đèn pha (SpotLight chiếu đường) + bóng đèn trước/sau sáng
+    setNight(nf) {
+      for (const c of st.cars) {
+        c.spot.intensity = 150 * nf;
+        for (const m of c.headMats) m.color.copy(_headDay).lerp(_headNight, nf);
+        for (const m of c.tailMats) m.color.copy(_tailDay).lerp(_tailNight, nf);
+      }
+    },
     update(dt) { place(dt); },
   };
 }

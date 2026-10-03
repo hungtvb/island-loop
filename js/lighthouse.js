@@ -33,14 +33,31 @@ export async function buildLighthouse(scene) {
   beamGroup.position.set(CONFIG.lighthouse.pos[0], lampY, CONFIG.lighthouse.pos[2]);
   scene.add(beamGroup);
 
+  const lampMat = new THREE.MeshBasicMaterial({ color: 0xfff6d8, fog: false });
   const lamp = new THREE.Mesh(
     new THREE.SphereGeometry(0.9, 16, 12),
-    new THREE.MeshBasicMaterial({ color: 0xfff6d8, fog: false })
+    lampMat
   );
   lamp.position.set(CONFIG.lighthouse.pos[0], lampY, CONFIG.lighthouse.pos[2]);
   scene.add(lamp);
 
-  return { update(dt) { beamGroup.rotation.y += dt * 0.85; } };
+  // Đèn thật duy nhất của hải đăng: sáng ấm ban đêm, tắt ban ngày
+  const beamLight = new THREE.PointLight(0xffd9a0, 0, 60, 1.8);
+  beamLight.position.set(CONFIG.lighthouse.pos[0], lampY + 0.5, CONFIG.lighthouse.pos[2]);
+  scene.add(beamLight);
+
+  const _lampDay = new THREE.Color(0xd9d2bd);
+  const _lampNight = new THREE.Color(0xfff3c0);
+  return {
+    update(dt) { beamGroup.rotation.y += dt * 0.85; },
+    // Tia xoay CHỈ hiện ban đêm — ban ngày chỉ thấy bóng đèn trên đỉnh
+    setNight(nf) {
+      beamGroup.visible = nf > 0.02;
+      beamMat.opacity = 0.30 * nf;
+      lampMat.color.copy(_lampDay).lerp(_lampNight, nf);
+      beamLight.intensity = 60 * nf;
+    },
+  };
 }
 
 export async function buildKeeperHouse(scene) {

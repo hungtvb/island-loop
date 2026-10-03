@@ -50,6 +50,7 @@ const SEA_FRAG = `
 uniform vec3 uSunDir;
 uniform float uTime;
 uniform vec3 uHorizonColor;
+uniform float uDim;   // daynight.js: 1=ngày, ~0.28=đêm
 varying vec3 vWorld;
 
 float s01(float x) { float c = clamp(x, 0.0, 1.0); return c * c * (3.0 - 2.0 * c); }
@@ -121,7 +122,7 @@ void main() {
   // Fade ra chân trời: mép biển (450m) chìm hẳn vào màu trời — không lộ mép biển
   float fogF = smoothstep(200.0, 470.0, length(cameraPosition - vWorld));
   col = mix(col, uHorizonColor, fogF);
-  gl_FragColor = vec4(col, 1.0);
+  gl_FragColor = vec4(col * uDim, 1.0);
 }`;
 
 export function buildSea(scene) {
@@ -135,6 +136,7 @@ export function buildSea(scene) {
       uTime: { value: 0 },
       uSunDir: { value: new THREE.Vector3(...CONFIG.sun.pos).normalize() },
       uHorizonColor: { value: new THREE.Color(0.85, 0.81, 0.74) },  // khớp màu trời ở chân trời
+      uDim: { value: 1 },
     },
   });
   const sea = new THREE.Mesh(geo, mat);
@@ -143,5 +145,6 @@ export function buildSea(scene) {
   scene.add(sea);
   return {
     update(dt, simTime) { mat.uniforms.uTime.value = simTime; },
+    uniforms: mat.uniforms,
   };
 }

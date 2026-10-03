@@ -187,9 +187,10 @@ async function buildHouses(scene) {
   // Nhà chính mái ngói cam + nhà tháp (giữ nguyên cấu trúc model)
   const main = await loadGLB(M.houseMain);
   const tall = await loadGLB(M.houseTall);
+  const placedGroups = [];
   let placed = 0;
-  if (main) { placeNorm(bakeNormalized(main), -71, 0, 0.5, 1.0); placed++; }    // nhà chính — nổi bật giữa làng
-  if (tall) { placeNorm(bakeNormalized(tall), -62, 10, -0.7, 1.0); placed++; }  // nhà tháp mái hiên cam
+  if (main) { placedGroups.push(placeNorm(bakeNormalized(main), -71, 0, 0.5, 1.0)); placed++; }    // nhà chính — nổi bật giữa làng
+  if (tall) { placedGroups.push(placeNorm(bakeNormalized(tall), -62, 10, -0.7, 1.0)); placed++; }  // nhà tháp mái hiên cam
 
   // Kit: tách các cặp nhà thành nhà lẻ
   const kit = await loadGLB(M.houseKit);
@@ -220,13 +221,34 @@ async function buildHouses(scene) {
     g.scale.setScalar(0.92 + (i % 3) * 0.09);
     plantOnGround(g, x, z, rot, 0.22);
     scene.add(g);
+    placedGroups.push(g);
     kitPlaced++;
   }
+
+  // Tìm material cửa sổ/kính trong các nhà đã đặt → cho phát sáng vàng ấm ban đêm
+  const seen = new Set();
+  for (const g of placedGroups) {
+    g.traverse((o) => {
+      if (!o.isMesh) return;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      for (const mt of mats) {
+        if (!mt || !mt.emissive || seen.has(mt)) continue;
+        const nm = (mt.name || '').toLowerCase();
+        if (/window|glass|fenster|vitre|madobe/i.test(nm)) {
+          seen.add(mt);
+          _windowMats.push(mt);
+        }
+      }
+    });
+  }
+  if (!_windowMats.length) console.log('[village] không tìm thấy material cửa sổ — chỉ đèn lồng sáng đêm');
   return { houseCount: placed + kitPlaced };
 }
 
 // --- PROPS: thùng (instanced), cột đèn + đèn lồng (instanced), giàn lưới ---
 let _lanternMat = null;
+let _nightF = 0;            // 0=ngày, 1=đêm — main.js cập nhật mỗi frame
+const _windowMats = [];     // material cửa sổ (tên chứa window/glass) → emissive ban đêm
 
 async function buildProps(scene) {
   const M = VG.models;
@@ -389,11 +411,20 @@ export async function buildVillage(scene) {
   window.__P2_VILLAGE__ = { houseCount, boatCount, barrelCount: 8, lanternCount: 6, netRackCount: 2 };
   return {
     houseCount,
+    // Ban đêm: cửa sổ phát sáng vàng ấm; đèn lồng sáng mạnh + nhấp nháy nến
+    setNight(nf) {
+      _nightF = nf;
+      for (const mt of _windowMats) {
+        mt.emissive.setHex(0xffb45e);
+        mt.emissiveIntensity = 1.7 * nf;
+      }
+    },
     update(dt) {
-      // đèn lồng: sáng ấm nhấp nháy rất nhẹ như lửa nến
+      // đèn lồng: ban ngày mờ, ban đêm sáng ấm nhấp nháy nhẹ như lửa nến
       if (_lanternMat) {
         const t = (performance.now() - t0) / 1000;
-        _lanternMat.emissiveIntensity = 0.55 + Math.sin(t * 2.1) * 0.05 + Math.sin(t * 5.7) * 0.02;
+        const flick = Math.sin(t * 2.1) * 0.05 + Math.sin(t * 5.7) * 0.02;
+        _lanternMat.emissiveIntensity = (0.12 + 0.78 * _nightF) + flick * (0.3 + 0.7 * _nightF);
       }
     },
   };

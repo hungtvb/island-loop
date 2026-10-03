@@ -12,11 +12,20 @@ export class UI {
     this.btnCam2 = document.getElementById('btn-cam2');
     this.btnFree = document.getElementById('btn-free');
     this.btnCar = document.getElementById('btn-car');
+    this.btnTmorn = document.getElementById('btn-tmorn');
+    this.btnTaft = document.getElementById('btn-taft');
+    this.btnTsun = document.getElementById('btn-tsun');
+    this.btnTnight = document.getElementById('btn-tnight');
+    this.btnWsun = document.getElementById('btn-wsun');
+    this.btnWcloud = document.getElementById('btn-wcloud');
+    this.btnWrain = document.getElementById('btn-wrain');
     this.metricsEl = document.getElementById('metrics');
     this.paused = false;
     this.orbitOn = true;
     this.viewMode = 'overview';
     this.camMode = 'free';
+    this.timeH = 9;
+    this.weatherMode = 'sunny';
   }
 
   progress(name, frac) {
@@ -112,6 +121,40 @@ export class UI {
 
   setCarLabel(label) {
     if (this.btnCar) this.btnCar.innerHTML = '🔄 Xe: ' + label;
+  }
+
+  // Thời gian trong ngày: Sáng 9h / Chiều 15h / Hoàng hôn 17.7h / Đêm 22h
+  onTime(cb) {
+    const pick = (h) => { this.timeH = h; this.setTimeActive(h); cb(h); };
+    if (this.btnTmorn) this.btnTmorn.addEventListener('click', () => pick(9));
+    if (this.btnTaft) this.btnTaft.addEventListener('click', () => pick(15));
+    if (this.btnTsun) this.btnTsun.addEventListener('click', () => pick(17.7));
+    if (this.btnTnight) this.btnTnight.addEventListener('click', () => pick(22));
+  }
+
+  setTimeActive(h) {
+    this.timeH = h;
+    const on = 'outline:2px solid #ffd54f;';
+    if (this.btnTmorn) this.btnTmorn.style.cssText = h === 9 ? on : '';
+    if (this.btnTaft) this.btnTaft.style.cssText = h === 15 ? on : '';
+    if (this.btnTsun) this.btnTsun.style.cssText = h === 17.7 ? on : '';
+    if (this.btnTnight) this.btnTnight.style.cssText = h === 22 ? on : '';
+  }
+
+  // Thời tiết: nắng / nhiều mây / mưa
+  onWeather(cb) {
+    const pick = (m) => { this.weatherMode = m; this.setWeatherActive(m); cb(m); };
+    if (this.btnWsun) this.btnWsun.addEventListener('click', () => pick('sunny'));
+    if (this.btnWcloud) this.btnWcloud.addEventListener('click', () => pick('cloudy'));
+    if (this.btnWrain) this.btnWrain.addEventListener('click', () => pick('rain'));
+  }
+
+  setWeatherActive(m) {
+    this.weatherMode = m;
+    const on = 'outline:2px solid #7ce8a8;';
+    if (this.btnWsun) this.btnWsun.style.cssText = m === 'sunny' ? on : '';
+    if (this.btnWcloud) this.btnWcloud.style.cssText = m === 'cloudy' ? on : '';
+    if (this.btnWrain) this.btnWrain.style.cssText = m === 'rain' ? on : '';
   }
 
   writeMetrics(m) {
