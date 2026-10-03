@@ -10,7 +10,7 @@ export function buildWaterfall(scene) {
     const loader = new GLTFLoader();
     loader.load('models/blender/waterfall.glb', (gltf) => {
       const model = gltf.scene;
-      const fx = 96, fz = -5;
+      const fx = 99, fz = -5;  // dịch ra đông 3m để không bị chôn trong vách đá
       const topY = meshHeight(93, -5) - 1.5;
       const baseY = 0.3;
       const modelH = 20;
