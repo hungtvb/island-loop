@@ -15,6 +15,7 @@ import { buildVillage } from './village.js';
 import { buildPier } from './pier.js';
 import { buildReef } from './reef.js';
 import { buildWaterfall } from './waterfall.js';
+import { buildPaddy } from './paddy.js';
 import { buildPalmForest } from './palmforest.js';
 import { buildAnimals } from './animals.js';
 import { buildCar } from './car.js';
@@ -79,6 +80,7 @@ let villageTick = null;
 let pierTick = null;
 let reefTick = null;
 let waterfallTick = null;
+let paddyTick = null;
 let palmTick = null;
 let animalTick = null;
 let carApi = null;
@@ -243,6 +245,7 @@ function finishBoot(forced) {
   bgLoad('Cầu tàu P4', () => buildPier(scene), (p) => { pierTick = p; });
   bgLoad('Rạn san hô P4', () => buildReef(scene), (r) => { reefTick = r; counts.reef = r.count; });
   bgLoad('Thác nước P5', () => buildWaterfall(scene), (w) => { waterfallTick = w; });
+  bgLoad('Ruộng lúa P5', () => buildPaddy(scene), (p) => { paddyTick = p; });
   bgLoad('Rừng dừa P3', () => buildPalmForest(scene), (p) => { palmTick = p; counts.palmForest = p.counts; });
   bgLoad('Động vật', () => buildAnimals(scene, (done, total, note) => {
     // Chỉ báo tiến trình nạp nền — loader chính đã gỡ sau ready().
@@ -317,6 +320,7 @@ function animate() {
     if (animalTick) animalTick.update(dt);
     if (carApi) carApi.update(dt);
     if (waterfallTick && waterfallTick.userData.tick) waterfallTick.userData.tick(dt);
+    if (paddyTick && paddyTick.userData.tick) paddyTick.userData.tick(dt, simTime);
   }
   if (viewTarget) {
     const k = 1 - Math.exp(-3 * dt);
