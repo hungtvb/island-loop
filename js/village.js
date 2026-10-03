@@ -323,7 +323,7 @@ async function buildProps(scene) {
     lampXf.forEach(([x, y, z], i) => {
       d.position.set(x, y, z);
       d.rotation.y = Math.random() * 0.6 - 0.3;
-      d.scale.setScalar(0.22);   // đèn ~0.7×1.5m
+      d.scale.setScalar(0.14);   // đèn ~0.45×0.95m (nhỏ gọn)
       d.updateMatrix();
       inst.setMatrixAt(i, d.matrix);
     });
