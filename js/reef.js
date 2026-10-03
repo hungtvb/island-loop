@@ -14,7 +14,6 @@ function findShallowSpot(x, z, dx, dz) {
 
 export function buildReef(scene) {
   return new Promise((resolve) => {
-    if (window.__DBG__) window.__DBG__('reef', 'đang tải...');
     const loader = new GLTFLoader();
     loader.load('models/blender/coral.glb', (gltf) => {
       const template = gltf.scene;
@@ -45,12 +44,10 @@ export function buildReef(scene) {
       }
       scene.add(group);
       console.log('[reef] Blender GLB đã gắn', placed, 'cụm');
-      if (window.__DBG__) window.__DBG__('reef', '✅ OK (' + placed + ')');
       window.__REEF__ = { group, count: placed };
       resolve({ group, count: placed });
     }, undefined, (err) => {
       console.error('[reef] Lỗi load:', err);
-      if (window.__DBG__) window.__DBG__('reef', '❌ LỖI: ' + (err.message || err));
       resolve({ group: null, count: 0 });
     });
   });
