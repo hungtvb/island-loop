@@ -23,7 +23,14 @@
   <div id="load-row"><span id="load-label">Chuẩn bị</span><span id="load-pct">0%</span></div>
 </div>
 
-<div id="topbar">ISLAND LOOP · P1 <span style="opacity:.6;font-size:.75em">v3t</span><small>Mũi Hải Đăng — đường xoắn ốc</small></div>
+<div id="topbar">ISLAND LOOP · P1 <span style="opacity:.6;font-size:.75em">v3u-debug</span><small>Mũi Hải Đăng — đường xoắn ốc</small></div>
+<div id="debug-status" style="position:fixed;top:50px;left:10px;background:rgba(0,0,0,0.8);color:#0f0;padding:10px;font-family:monospace;font-size:12px;z-index:9999;border-radius:5px;max-width:300px;">Đang load models...<br><span id="dbg-waterfall">Thác: ...</span><br><span id="dbg-reef">San hô: ...</span><br><span id="dbg-flower">Hoa: ...</span><br><span id="dbg-paddy">Ruộng: ...</span></div>
+<script>
+window.__DBG__ = function(name, status) {
+  const el = document.getElementById('dbg-' + name);
+  if (el) el.textContent = name + ': ' + status;
+};
+</script>
 
 <button id="btn-menu" aria-label="Menu">☰</button>
 

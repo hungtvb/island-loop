@@ -11,6 +11,7 @@ const TREE_SPOTS = [
 
 export function buildFlowerTrees(scene) {
   return new Promise((resolve) => {
+    if (window.__DBG__) window.__DBG__('flower', 'đang tải...');
     const loader = new GLTFLoader();
     loader.load('models/blender/flowertree.glb', (gltf) => {
       const template = gltf.scene;
@@ -68,10 +69,12 @@ export function buildFlowerTrees(scene) {
       };
       scene.add(group);
       console.log('[flowertree] Blender GLB đã gắn');
+      if (window.__DBG__) window.__DBG__('flower', '✅ OK');
       window.__FLOWERTREES__ = { group, count: TREE_SPOTS.length };
       resolve(group);
     }, undefined, (err) => {
       console.error('[flowertree] Lỗi load:', err);
+      if (window.__DBG__) window.__DBG__('flower', '❌ LỖI: ' + (err.message || err));
       resolve(null);
     });
   });

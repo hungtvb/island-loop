@@ -7,6 +7,7 @@ const PADDY_CENTER = [-52, -18];
 
 export function buildPaddy(scene) {
   return new Promise((resolve) => {
+    if (window.__DBG__) window.__DBG__('paddy', 'đang tải...');
     const loader = new GLTFLoader();
     loader.load('models/blender/paddy.glb', (gltf) => {
       const terraces = gltf.scene;
@@ -44,10 +45,12 @@ export function buildPaddy(scene) {
       group.add(terraces); group.add(riceIM);
       group.userData.tick = () => {};
       console.log('[paddy] Blender GLB đã gắn');
+      if (window.__DBG__) window.__DBG__('paddy', '✅ OK');
       window.__PADDY__ = { group };
       resolve(group);
     }, undefined, (err) => {
       console.error('[paddy] Lỗi load:', err);
+      if (window.__DBG__) window.__DBG__('paddy', '❌ LỖI: ' + (err.message || err));
       resolve(null);
     });
   });
