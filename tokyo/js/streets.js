@@ -20,16 +20,16 @@ export async function buildStreets(scene) {
   for (let i = -90; i <= 90; i += 8) {
     if (Math.abs(i) < 8) continue; // bỏ qua ngã tư
     const l1 = new THREE.Mesh(new THREE.BoxGeometry(3, 0.05, 0.3), lineMat);
-    l1.position.set(i, 0.22, 0);
+    l1.position.set(i, 0.26, 0);
     group.add(l1);
     const l2 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, 3), lineMat);
-    l2.position.set(0, 0.22, i);
+    l2.position.set(0, 0.26, i);
     group.add(l2);
   }
   // Vạch qua đường Shibuya (ngã tư)
   for (let i = -4; i <= 4; i++) {
     const s = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.05, 8), lineMat);
-    s.position.set(i * 2, 0.22, 0);
+    s.position.set(i * 2, 0.26, 0);
     group.add(s);
   }
   
