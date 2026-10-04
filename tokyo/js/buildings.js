@@ -8,7 +8,7 @@ const POSITIONS = [
   [-45, 30, 'c', 0], [45, 30, 'a', Math.PI/2],
   [-80, -60, 'b', 0], [80, -60, 'c', 0],
   [-80, 60, 'a', 0], [80, 60, 'b', Math.PI/2],
-  [0, -70, 'c', 0], [0, 70, 'a', 0],
+  [20, -70, 'c', 0], [-20, 70, 'a', 0],
 ];
 
 export async function buildBuildings(scene) {
