@@ -25,8 +25,8 @@ export async function buildCars(scene) {
   
   // Xe đậu (bãi đậu xe)
   const parked = [
-    [-50, 15, 0, 'red'], [-50, 20, 0, 'blue'], [-50, 25, 0, 'yellow'],
-    [50, -15, Math.PI, 'blue'], [50, -20, Math.PI, 'red'],
+    [-60, 15, 0, 'red'], [-60, 20, 0, 'blue'], [-60, 25, 0, 'yellow'],
+    [55, -15, Math.PI, 'blue'], [55, -20, Math.PI, 'red'],
     [-15, 50, Math.PI/2, 'yellow'], [15, -50, -Math.PI/2, 'red'],
   ];
   for (const [x, z, rot, color] of parked) {
