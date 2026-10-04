@@ -5,7 +5,6 @@ import { loadGLB } from './loaders.js';
 const POSITIONS = [
   [-35, -45], [35, -45], [-35, 45], [35, 45],
   [-70, 0], [70, 0], [0, -45], [0, 45],
-  [-15, -25], [15, 25], [-55, 20], [55, -20],
 ];
 
 export async function buildNature(scene) {
