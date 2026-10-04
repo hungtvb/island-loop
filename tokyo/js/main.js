@@ -44,8 +44,8 @@ async function init() {
     document.getElementById('menu-panel').classList.toggle('open');
   };
   document.getElementById('btn-cam1').onclick = () => {
-    camera.position.set(40, 25, 40);
-    controls.target.set(0, 15, 0);
+    camera.position.set(60, 30, 60);
+    controls.target.set(28, 15, 28);
   };
   document.getElementById('btn-cam2').onclick = () => {
     camera.position.set(100, 80, 100);
